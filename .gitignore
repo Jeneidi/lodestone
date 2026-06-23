@@ -1,0 +1,78 @@
+# =============================================================================
+# Lodestone .gitignore
+# =============================================================================
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+MANIFEST
+
+# Environment / secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Dataset files (downloaded at runtime via `make data`)
+data/*.jsonl
+data/*.json
+data/cache/
+data/*.npy
+data/*.npz
+
+# Evaluation reports (generated at runtime via `make eval` / `make ablate`)
+# Exclude the directory by default, but explicitly track the portfolio artefacts
+evals/reports/
+!evals/reports/RESULTS.md
+!evals/reports/results.json
+!evals/reports/ABLATION.md
+!evals/reports/ablation.csv
+!evals/reports/ablation_ndcg.png
+!evals/reports/latency_quality.png
+
+# Numpy arrays saved during indexing / dense retrieval
+*.npy
+*.npz
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Streamlit
+.streamlit/
+
+# FAISS / vector store artifacts
+*.index
+*.faiss

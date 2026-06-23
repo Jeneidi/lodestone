@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lodestone — Complete Code Study Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; font-size: 15px; line-height: 1.7; color: #1a1a1a; background: #fff; padding: 40px; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 2.2em; border-bottom: 3px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 8px; }
+  h2 { font-size: 1.6em; margin-top: 48px; margin-bottom: 16px; border-bottom: 2px solid #555; padding-bottom: 8px; color: #222; }
+  h3 { font-size: 1.2em; margin-top: 32px; margin-bottom: 10px; color: #333; }
+  h4 { font-size: 1em; margin-top: 20px; margin-bottom: 6px; color: #444; font-style: italic; }
+  p { margin-bottom: 12px; }
+  .subtitle { color: #555; font-size: 1.1em; margin-bottom: 32px; }
+  .toc { background: #f5f5f5; border: 1px solid #ddd; padding: 20px 30px; margin: 24px 0 40px 0; border-radius: 4px; }
+  .toc h3 { margin-top: 0; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 4px 0; }
+  .file-header { background: #1a1a1a; color: #fff; padding: 10px 16px; font-family: monospace; font-size: 0.95em; border-radius: 4px 4px 0 0; margin-top: 32px; }
+  .code-block { background: #f8f8f8; border: 1px solid #ddd; border-top: none; padding: 16px; font-family: 'Courier New', monospace; font-size: 0.82em; line-height: 1.5; white-space: pre-wrap; border-radius: 0 0 4px 4px; margin-bottom: 0; }
+  .line-explain { margin: 0; padding: 0; }
+  .line-entry { border-left: 3px solid #ccc; padding: 12px 16px; margin: 12px 0; background: #fafafa; }
+  .line-entry.important { border-left-color: #e44; background: #fff5f5; }
+  .line-entry.pattern { border-left-color: #27ae60; background: #f0fff4; }
+  .line-entry.math { border-left-color: #2980b9; background: #f0f7ff; }
+  .code-snippet { font-family: 'Courier New', monospace; background: #eee; padding: 2px 6px; border-radius: 3px; font-size: 0.88em; }
+  .label { font-weight: bold; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; color: #888; display: block; margin-bottom: 4px; }
+  .what { }
+  .why { color: #555; margin-top: 6px; font-style: italic; }
+  .library { color: #2980b9; font-size: 0.85em; font-weight: bold; }
+  .section-divider { border: none; border-top: 1px solid #ddd; margin: 40px 0; }
+  .concept-box { background: #fffbe6; border: 1px solid #f0c040; padding: 14px 18px; border-radius: 4px; margin: 16px 0; }
+  .concept-box strong { display: block; margin-bottom: 6px; }
+  .flow-diagram { background: #f0f7ff; border: 1px solid #b3d4f5; padding: 16px 20px; border-radius: 4px; margin: 16px 0; font-family: monospace; font-size: 0.9em; line-height: 1.9; }
+  .page-break { page-break-before: always; }
+  ul { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th { background: #1a1a1a; color: white; padding: 8px 12px; text-align: left; font-size: 0.85em; }
+  td { padding: 8px 12px; border-bottom: 1px solid #ddd; font-size: 0.88em; }
+  tr:nth-child(even) { background: #f9f9f9; }
+</style>
+</head>
+<body>
+
+<h1>Lodestone — Complete Code Study Guide</h1>
+<p class="subtitle">Every file. Every line. What it does. Why we needed it.</p>
+
+<div class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li>How the whole project fits together (read this first)</li>
+    <li>schemas.py — the data contracts</li>
+    <li>config.py — settings and environment variables</li>
+    <li>retrieval/tokenize.py — cleaning text into words</li>
+    <li>retrieval/base.py — the retriever contract</li>
+    <li>retrieval/bm25.py — keyword search from scratch</li>
+    <li>retrieval/dense.py — meaning-based search</li>
+    <li>retrieval/fusion.py — combining BM25 + Dense</li>
+    <li>retrieval/expansion.py — query expansion (RM3)</li>
+    <li>retrieval/rerank.py — cross-encoder reranking</li>
+    <li>engine.py — the master coordinator</li>
+    <li>Key Python patterns reference</li>
+  </ol>
+</div>
+
+<!-- ======================================================= -->
+<h2>1. How the Whole Project Fits Together</h2>
+<!-- ======================================================= -->
+
+<p>Before reading any code, understand the <strong>flow of data</strong> from a user's question to the final answer. Everything in this codebase exists to serve this pipeline:</p>
+
+<div class="flow-diagram">
+User types: "Who was Nikola Tesla?"
+        │
+        ▼
+  engine.ask("Who was Nikola Tesla?")
+        │
+        ├─► BM25Retriever.search()      ← keyword match (finds "Tesla", "Nikola")
+        │         │
+        ├─► DenseRetriever.search()     ← meaning match (finds semantically similar chunks)
+        │         │
+        ▼
+  HybridRetriever fuses both lists (RRF or weighted)
+        │
+        ▼
+  CrossEncoderReranker.rerank()         ← re-reads each (question, chunk) pair deeply
+        │
+        ▼
+  ExtractiveAnswerer.answer()           ← picks top chunk's text as the answer
+        │
+        ▼
+  Answer returned to dashboard/API/CLI
+</div>
+
+<div class="concept-box">
+  <strong>The key mental model: data shapes</strong>
+  A <code class="code-snippet">Document</code> is a whole Wikipedia article. A <code class="code-snippet">Chunk</code> is a piece of it (~200 words). A <code class="code-snippet">ScoredChunk</code> is a Chunk that a retriever ranked with a score. An <code class="code-snippet">Answer</code> is the final output. These four objects flow through every file.
+</div>
+
+<table>
+  <tr><th>File</th><th>Job in one sentence</th></tr>
+  <tr><td>schemas.py</td><td>Defines the data shapes everything else uses</td></tr>
+  <tr><td>config.py</td><td>Reads settings from environment variables</td></tr>
+  <tr><td>retrieval/tokenize.py</td><td>Cleans raw text into word tokens for BM25</td></tr>
+  <tr><td>retrieval/base.py</td><td>Defines the rule every retriever must follow</td></tr>
+  <tr><td>retrieval/bm25.py</td><td>Keyword search: finds chunks containing query words</td></tr>
+  <tr><td>retrieval/dense.py</td><td>Meaning search: finds chunks semantically similar to query</td></tr>
+  <tr><td>retrieval/fusion.py</td><td>Merges BM25 + Dense result lists into one ranked list</td></tr>
+  <tr><td>retrieval/expansion.py</td><td>Expands queries with related words before searching</td></tr>
+  <tr><td>retrieval/rerank.py</td><td>Re-scores the top candidates with a smarter model</td></tr>
+  <tr><td>engine.py</td><td>The single entry point that wires everything together</td></tr>
+</table>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">2. schemas.py — The Data Contracts</h2>
+<!-- ======================================================= -->
+
+<p>This file is the <strong>shared language</strong> of the whole project. Every other file imports from here. If you change a field name here, you break everything. Read this first.</p>
+
+<div class="file-header">src/lodestone/schemas.py</div>
+<div class="code-block">from __future__ import annotations
+from pydantic import BaseModel, Field</div>
+
+<div class="line-entry pattern">
+  <span class="label">Lines 1–2 — imports</span>
+  <span class="what"><code class="code-snippet">from __future__ import annotations</code> — tells Python to treat all type hints as text strings, not real objects. This lets you write <code class="code-snippet">list[str]</code> without Python trying to evaluate it at startup. Always put this at the top of files with type hints.</span>
+  <span class="why">Why: without this, on Python 3.9 and below, <code class="code-snippet">list[Chunk]</code> would crash because Python would try to evaluate "list of Chunk" before Chunk is defined.</span>
+  <br><span class="library">Library: __future__ is Python stdlib. pydantic is a third-party data validation library (pip install pydantic).</span>
+</div>
+
+<div class="code-block">class Document(BaseModel):
+    doc_id: str
+    title: str = ""
+    text: str
+    source: str = ""
+    metadata: dict = Field(default_factory=dict)</div>
+
+<div class="line-entry important">
+  <span class="label">class Document(BaseModel) — pydantic model</span>
+  <span class="what"><code class="code-snippet">class Document(BaseModel)</code> creates a data class that validates its own fields. When you do <code class="code-snippet">Document(doc_id="abc", text="hello")</code> pydantic checks that doc_id is actually a string, text is a string, etc. If you pass the wrong type it raises an error immediately.</span>
+  <span class="why">Why: without pydantic, you'd pass raw dicts everywhere and typos like <code class="code-snippet">{"dco_id": "abc"}</code> would silently fail. Pydantic catches bugs at the boundary.</span>
+</div>
+
+<div class="line-entry">
+  <span class="label">doc_id: str</span>
+  <span class="what">A field with no default — it is REQUIRED. If you try to create a Document without doc_id, pydantic raises a ValidationError.</span>
+  <span class="why">Why: every Document needs a unique ID so retrievers can match chunks back to their parent document when computing retrieval metrics.</span>
+</div>
+
+<div class="line-entry">
+  <span class="label">title: str = ""</span>
+  <span class="what">A field WITH a default — it is OPTIONAL. If you don't provide title, it becomes an empty string automatically.</span>
+  <span class="why">Why: not all corpora have titles (some are raw text dumps), so making it optional keeps the model flexible.</span>
+</div>
+
+<div class="line-entry pattern">
+  <span class="label">metadata: dict = Field(default_factory=dict)</span>
+  <span class="what"><code class="code-snippet">Field(default_factory=dict)</code> means "call <code class="code-snippet">dict()</code> to create the default". This is different from <code class="code-snippet">metadata: dict = {}</code>.</span>
+  <span class="why">Why this matters: in Python, <code class="code-snippet">= {}</code> as a default is dangerous — ALL instances would share the SAME dictionary object. <code class="code-snippet">default_factory=dict</code> creates a fresh empty dict for each instance. This is a classic Python gotcha.</span>
+</div>
+
+<div class="code-block">class Chunk(BaseModel):
+    chunk_id: str
+    doc_id: str
+    text: str
+    index: int = 0
+    metadata: dict = Field(default_factory=dict)</div>
+
+<div class="line-entry">
+  <span class="label">Chunk — a piece of a Document</span>
+  <span class="what">A Document gets split into many Chunks. <code class="code-snippet">doc_id</code> links back to the parent Document. <code class="code-snippet">index</code> is its position within that document (0 = first chunk, 1 = second, etc.). <code class="code-snippet">chunk_id</code> is globally unique (built as <code class="code-snippet">"{doc_id}::fixed::{index}"</code>).</span>
+  <span class="why">Why: you need chunks because LLMs and retrievers work best on short passages (~200 words), not 2000-word Wikipedia articles. The chunk_id lets you deduplicate results and trace where each result came from.</span>
+</div>
+
+<div class="code-block">class ScoredChunk(BaseModel):
+    chunk: Chunk
+    score: float
+    retriever: str = ""</div>
+
+<div class="line-entry">
+  <span class="label">ScoredChunk — a Chunk with a relevance score attached</span>
+  <span class="what"><code class="code-snippet">chunk: Chunk</code> means this field IS a Chunk object (nested model). <code class="code-snippet">score: float</code> is the relevance score from whichever retriever found it. <code class="code-snippet">retriever: str</code> tracks which retriever gave this score (e.g. "bm25", "dense", "hybrid_rrf").</span>
+  <span class="why">Why: after retrieval, you need to know both WHICH chunk was relevant AND HOW relevant it was. The score is used for sorting and merging. The retriever name is shown in the dashboard and eval reports.</span>
+</div>
+
+<div class="code-block">class QAExample(BaseModel):
+    qid: str
+    question: str
+    answer: str
+    relevant_doc_ids: list[str] = Field(default_factory=list)</div>
+
+<div class="line-entry">
+  <span class="label">QAExample — one question + its ground-truth answer</span>
+  <span class="what">Used ONLY by the eval harness, not by the live system. <code class="code-snippet">relevant_doc_ids</code> is a list of doc_ids that are the correct answer sources. The eval code checks: "did the retriever find any chunk from these doc_ids?"</span>
+  <span class="why">Why: you need ground truth to measure retrieval quality. Without QAExamples, you can't calculate Recall@5 or nDCG — you'd have no way to know if the system found the right thing.</span>
+</div>
+
+<div class="code-block">class Answer(BaseModel):
+    text: str
+    supporting_chunks: list[ScoredChunk] = Field(default_factory=list)
+    generator: str = ""
+    faithfulness: float | None = None
+    latency_ms: float = 0.0</div>
+
+<div class="line-entry">
+  <span class="label">Answer — the final output returned to users</span>
+  <span class="what"><code class="code-snippet">text</code> is the answer string. <code class="code-snippet">supporting_chunks</code> are the passages used as evidence. <code class="code-snippet">generator</code> is either "extractive" or "claude". <code class="code-snippet">faithfulness: float | None</code> means it can be a float OR None — the <code class="code-snippet">|</code> is Python's union type syntax. It's None when faithfulness scoring is off.</span>
+  <span class="why">Why: bundling all this into one object means every layer (API, CLI, dashboard) gets everything it needs from one return value instead of multiple function calls.</span>
+</div>
+
+<div class="code-block">class RetrievalRunResult(BaseModel):
+    qid: str
+    retrieved: list[ScoredChunk]
+    latency_ms: float = 0.0</div>
+
+<div class="line-entry">
+  <span class="label">RetrievalRunResult — eval harness output per question</span>
+  <span class="what">Records what the retriever returned for one question (<code class="code-snippet">qid</code> links to a QAExample). Used by <code class="code-snippet">evals/aggregate.py</code> to compute metrics.</span>
+  <span class="why">Why: the eval harness runs hundreds of questions, so it needs a structured format to store all results before computing aggregate statistics. Separating retrieval results from metric computation means you can re-run metrics without re-running retrieval.</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">3. config.py — Settings and Environment Variables</h2>
+<!-- ======================================================= -->
+
+<p>This file controls every tunable parameter in the system without touching code. Change a model name or threshold by setting an environment variable.</p>
+
+<div class="file-header">src/lodestone/config.py</div>
+<div class="code-block">import functools
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict</div>
+
+<div class="line-entry">
+  <span class="label">imports</span>
+  <span class="what"><code class="code-snippet">functools</code> gives us <code class="code-snippet">lru_cache</code> to cache the settings singleton. <code class="code-snippet">pydantic_settings</code> is a separate package from pydantic that reads values from environment variables and .env files automatically.</span>
+  <span class="library">Library: functools is stdlib. pydantic-settings is a third-party package.</span>
+</div>
+
+<div class="code-block">class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="LODESTONE_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )</div>
+
+<div class="line-entry pattern">
+  <span class="label">class Settings(BaseSettings) — env-driven config</span>
+  <span class="what"><code class="code-snippet">BaseSettings</code> is like <code class="code-snippet">BaseModel</code> but reads field values from environment variables automatically. <code class="code-snippet">env_prefix="LODESTONE_"</code> means the env var for a field called <code class="code-snippet">top_k</code> is <code class="code-snippet">LODESTONE_TOP_K</code>. <code class="code-snippet">env_file=".env"</code> means it also reads a .env file if present. <code class="code-snippet">extra="ignore"</code> means unknown env vars are silently ignored (no crash).</span>
+  <span class="why">Why: hardcoding model names and thresholds into source code makes experimentation painful. With this pattern, you can change any setting by setting an env var — no code change required. The prefix prevents collisions with other apps' env vars.</span>
+</div>
+
+<div class="code-block">    embedding_model_name: str = Field(
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        description="HuggingFace model identifier for dense retrieval.",
+    )</div>
+
+<div class="line-entry">
+  <span class="label">Field with description</span>
+  <span class="what"><code class="code-snippet">Field(default=..., description=...)</code> sets both the default value and human-readable documentation. To override: <code class="code-snippet">export LODESTONE_EMBEDDING_MODEL_NAME="sentence-transformers/all-mpnet-base-v2"</code>.</span>
+  <span class="why">Why: the description shows up in IDE autocompletion and makes the .env.example file self-documenting. The default is MiniLM because it's fast, free, and good enough for CPU inference.</span>
+</div>
+
+<div class="code-block">    rrf_k: int = Field(default=60, ge=1, description="RRF smoothing constant.")
+    hybrid_alpha: float = Field(default=0.5, ge=0.0, le=1.0, ...)</div>
+
+<div class="line-entry">
+  <span class="label">ge= and le= — validation constraints</span>
+  <span class="what"><code class="code-snippet">ge=1</code> means "greater than or equal to 1". <code class="code-snippet">le=1.0</code> means "less than or equal to 1.0". Pydantic enforces these at runtime — if you set <code class="code-snippet">LODESTONE_HYBRID_ALPHA=5.0</code> it raises a ValidationError immediately.</span>
+  <span class="why">Why: these constraints catch configuration mistakes before they corrupt results silently. alpha=5.0 would produce nonsensical weighted scores; catching it early is better than debugging wrong eval numbers later.</span>
+</div>
+
+<div class="code-block">    anthropic_api_key: str | None = Field(default=None, ...)</div>
+
+<div class="line-entry">
+  <span class="label">Optional secret field</span>
+  <span class="what"><code class="code-snippet">str | None</code> means this field can be a string OR None. Default is None, meaning Claude generation is unavailable unless you explicitly set the key. The <code class="code-snippet">|</code> syntax is Python 3.10+ union types.</span>
+  <span class="why">Why: the whole system works without an API key (using extractive answers). Making the key optional means zero-cost local operation by default, with Claude as an upgrade path.</span>
+</div>
+
+<div class="code-block">@functools.lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings()</div>
+
+<div class="line-entry pattern">
+  <span class="label">@functools.lru_cache(maxsize=1) — the singleton pattern</span>
+  <span class="what"><code class="code-snippet">@functools.lru_cache</code> is a decorator that caches the return value of a function. <code class="code-snippet">maxsize=1</code> means it caches exactly one call result. So <code class="code-snippet">get_settings()</code> reads the environment and builds the Settings object ONCE, then returns the same object on every subsequent call.</span>
+  <span class="why">Why: creating a Settings object reads from env vars and disk. Doing that 500 times during a search query would be wasteful. The cache means it's done once at startup. The <code class="code-snippet">maxsize=1</code> ensures there's always exactly one Settings instance in the whole process — a singleton.</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">4. retrieval/tokenize.py — Cleaning Text Into Words</h2>
+<!-- ======================================================= -->
+
+<p>BM25 is a keyword search algorithm. Before you can match keywords, you need to convert messy raw text into clean, comparable word tokens. That's this file's entire job.</p>
+
+<div class="file-header">src/lodestone/retrieval/tokenize.py</div>
+<div class="code-block">import re
+import unicodedata
+
+STOPWORDS: frozenset[str] = frozenset({"a", "an", "the", "and", "or", ...})</div>
+
+<div class="line-entry">
+  <span class="label">re and unicodedata — stdlib text tools</span>
+  <span class="what"><code class="code-snippet">re</code> = regular expressions. Used to find sequences of word characters. <code class="code-snippet">unicodedata</code> = Unicode text processing. Used to normalize accented characters ("é" → "e").</span>
+  <span class="library">Library: both are Python stdlib — no install needed.</span>
+</div>
+
+<div class="line-entry">
+  <span class="label">STOPWORDS: frozenset[str]</span>
+  <span class="what">A <code class="code-snippet">frozenset</code> is an immutable set — like a set but you can't add or remove items after creation. Checking <code class="code-snippet">"the" in STOPWORDS</code> is O(1) (instant) because sets use hash lookup, not linear scan.</span>
+  <span class="why">Why frozenset instead of a list: membership check <code class="code-snippet">word in frozenset</code> is O(1). With a list it would be O(n) — slow when called millions of times during indexing. Why these specific words: stop words ("the", "a", "is") appear in nearly every document so they carry zero discriminating information for keyword search.</span>
+</div>
+
+<div class="code-block">_WORD_RE = re.compile(r"\w+")</div>
+
+<div class="line-entry pattern">
+  <span class="label">re.compile() — pre-compiled regex</span>
+  <span class="what"><code class="code-snippet">re.compile(r"\w+")</code> compiles a regex pattern once at module load time. <code class="code-snippet">\w+</code> means "one or more word characters" (letters, digits, underscore). The <code class="code-snippet">r""</code> prefix means raw string — backslashes are literal, not escape characters.</span>
+  <span class="why">Why compile instead of <code class="code-snippet">re.findall(r"\w+", text)</code> inline: compiling once is faster when the same pattern is used thousands of times (during indexing every chunk). The compiled object stores the pattern's bytecode.</span>
+</div>
+
+<div class="code-block">def normalize(text: str) -> str:
+    return unicodedata.normalize("NFKD", text).lower()</div>
+
+<div class="line-entry math">
+  <span class="label">normalize() — unicode normalization + lowercasing</span>
+  <span class="what"><code class="code-snippet">unicodedata.normalize("NFKD", text)</code> decomposes characters like "é" into "e" + combining accent mark. <code class="code-snippet">.lower()</code> lowercases everything. Result: "Nikola" → "nikola", "café" → "cafe" (approximately).</span>
+  <span class="why">Why: BM25 does exact string matching. "Tesla" and "tesla" should match. "résumé" and "resume" should match. Without normalization, capitalization and accents would prevent matches.</span>
+</div>
+
+<div class="code-block">def word_tokenize(text: str) -> list[str]:
+    return _WORD_RE.findall(text)</div>
+
+<div class="line-entry">
+  <span class="label">word_tokenize() — split text into word tokens</span>
+  <span class="what"><code class="code-snippet">_WORD_RE.findall(text)</code> returns a list of all non-overlapping matches of <code class="code-snippet">\w+</code> in text. "Hello, world!" → ["Hello", "world"]. Punctuation and spaces are automatically discarded (they don't match <code class="code-snippet">\w+</code>).</span>
+  <span class="why">Why not just <code class="code-snippet">text.split()</code>: split() keeps punctuation attached ("world!" stays "world!"). The regex cleanly strips all non-word characters.</span>
+</div>
+
+<div class="code-block">def remove_stopwords(tokens: list[str]) -> list[str]:
+    return [t for t in tokens if t not in STOPWORDS]</div>
+
+<div class="line-entry pattern">
+  <span class="label">List comprehension with filter condition</span>
+  <span class="what"><code class="code-snippet">[t for t in tokens if t not in STOPWORDS]</code> — this is a list comprehension. It means: "go through every token t in the list; keep it only if it's NOT in STOPWORDS". Returns a new list (does not modify the original).</span>
+  <span class="why">Why: "who is nikola tesla" after stopword removal becomes ["nikola", "tesla"]. Only content words remain. This improves BM25 quality because "is" appearing in every document would dilute scores if kept.</span>
+</div>
+
+<div class="code-block">def tokenize(text: str, remove_stops: bool = True, stem: bool = False) -> list[str]:
+    tokens = word_tokenize(normalize(text))
+    if remove_stops:
+        tokens = remove_stopwords(tokens)
+    if stem:
+        tokens = [_porter_lite_stem(t) for t in tokens]
+    return tokens</div>
+
+<div class="line-entry pattern">
+  <span class="label">tokenize() — the complete pipeline in one function</span>
+  <span class="what">This chains the three steps: normalize → word_tokenize → (optionally) remove_stopwords → (optionally) stem. The caller decides what they need. BM25 calls it with <code class="code-snippet">remove_stops=True, stem=False</code>. Note the nested call: <code class="code-snippet">word_tokenize(normalize(text))</code> — normalize runs first, its output feeds into word_tokenize.</span>
+  <span class="why">Why this design: each step is separately testable. You can test normalize() alone, word_tokenize() alone, etc. The composed tokenize() just wires them together with flags for optional steps.</span>
+</div>
+
+<div class="code-block">def _porter_lite_stem(token: str) -> str:
+    if len(token) <= 3:
+        return token
+    if token.endswith("ness") and len(token) - 4 >= 4:
+        return token[:-4]
+    if token.endswith("ing") and len(token) - 3 >= 3:
+        stem = token[:-3]
+        if len(stem) >= 2 and stem[-1] == stem[-2] and stem[-1] not in "aeiou":
+            return stem[:-1]   # runn → run
+        ...</div>
+
+<div class="line-entry math">
+  <span class="label">_porter_lite_stem() — suffix stripping</span>
+  <span class="what">Strips common English suffixes so "running" and "run" match as the same word. <code class="code-snippet">token[:-4]</code> means "all characters except the last 4" (removes "-ness"). The doubled-consonant check (<code class="code-snippet">stem[-1] == stem[-2]</code>) handles "running" → "runn" → "run". The underscore prefix means this is a private function not meant to be called from outside this module.</span>
+  <span class="why">Why not use NLTK: NLTK requires a download of data files and is heavy. This mini-stemmer handles 90% of cases with zero dependencies. It's documented as imperfect — that's intentional and honest.</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">5. retrieval/base.py — The Retriever Contract</h2>
+<!-- ======================================================= -->
+
+<p>This file defines a <strong>rule</strong>: any class that wants to be a retriever MUST have <code class="code-snippet">index()</code> and <code class="code-snippet">search()</code>. It enforces this at the Python language level.</p>
+
+<div class="file-header">src/lodestone/retrieval/base.py</div>
+<div class="code-block">from abc import ABC, abstractmethod
+from lodestone.schemas import Chunk, ScoredChunk
+
+class Retriever(ABC):
+    name: str = "retriever"
+
+    @abstractmethod
+    def index(self, chunks: list[Chunk]) -> None: ...
+
+    @abstractmethod
+    def search(self, query: str, k: int = 10) -> list[ScoredChunk]: ...</div>
+
+<div class="line-entry important">
+  <span class="label">ABC and @abstractmethod — the abstract base class pattern</span>
+  <span class="what"><code class="code-snippet">ABC</code> means "Abstract Base Class". A class that inherits from ABC cannot be instantiated directly — you must subclass it and implement all <code class="code-snippet">@abstractmethod</code> methods. If you try to create a subclass without implementing <code class="code-snippet">index()</code> or <code class="code-snippet">search()</code>, Python raises a <code class="code-snippet">TypeError</code> when you try to instantiate it.</span>
+  <span class="why">Why: the HybridRetriever, eval harness, and engine all accept any Retriever. Without this contract, nothing stops someone from writing a retriever that has <code class="code-snippet">query()</code> instead of <code class="code-snippet">search()</code>, which would crash at runtime. The ABC catches that at class definition time.</span>
+  <br><span class="library">Library: abc is Python stdlib.</span>
+</div>
+
+<div class="line-entry">
+  <span class="label">name: str = "retriever" — class-level attribute</span>
+  <span class="what">Every concrete subclass overrides this with its own name (e.g., <code class="code-snippet">name = "bm25"</code>). This name gets stored in ScoredChunk.retriever so you can see which retriever produced each result.</span>
+</div>
+
+<div class="line-entry">
+  <span class="label">... (ellipsis) as a method body</span>
+  <span class="what">The <code class="code-snippet">...</code> (called Ellipsis) is valid Python — it means "no body, to be filled in by subclasses". It's equivalent to <code class="code-snippet">pass</code> here but more idiomatic for abstract methods.</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">6. retrieval/bm25.py — Keyword Search From Scratch</h2>
+<!-- ======================================================= -->
+
+<p>This is the most algorithmic file in the project. BM25 is a 1994 algorithm that still powers much of Google's early ranking and almost every search engine's keyword layer.</p>
+
+<div class="concept-box">
+  <strong>The BM25 formula you need to understand:</strong>
+  score(chunk, query) = sum over each query word of:  IDF(word) × TF_norm(word, chunk)<br><br>
+  IDF(word) = how rare is this word across all chunks? Rare words score higher.<br>
+  TF_norm(word, chunk) = how often does this word appear in this chunk, normalized by chunk length?<br><br>
+  Together: a chunk scores high when it contains rare query words, frequently, in a shorter text.
+</div>
+
+<div class="file-header">src/lodestone/retrieval/bm25.py</div>
+<div class="code-block">from collections import Counter, defaultdict
+import math
+from lodestone.retrieval.base import Retriever
+from lodestone.retrieval.tokenize import tokenize
+from lodestone.schemas import Chunk, ScoredChunk</div>
+
+<div class="line-entry">
+  <span class="label">Counter and defaultdict — smart dictionary types</span>
+  <span class="what"><code class="code-snippet">Counter(["a","b","a","c","a"])</code> → <code class="code-snippet">{"a": 3, "b": 1, "c": 1}</code>. Perfect for term frequency. <code class="code-snippet">defaultdict(list)</code> is a dict that automatically creates a <code class="code-snippet">[]</code> for any missing key instead of raising a KeyError.</span>
+  <span class="library">Library: collections is Python stdlib.</span>
+</div>
+
+<div class="code-block">class BM25Retriever(Retriever):
+    name: str = "bm25"
+
+    def __init__(self, k1: float = 1.5, b: float = 0.75) -> None:
+        self.k1 = k1
+        self.b = b
+        self._chunks: list[Chunk] = []
+        self._doc_lengths: list[int] = []
+        self._avgdl: float = 0.0
+        self._inverted_index: dict[str, list[tuple[int, int]]] = defaultdict(list)
+        self._idf: dict[str, float] = {}
+        self._indexed: bool = False</div>
+
+<div class="line-entry important">
+  <span class="label">__init__ — all internal state starts empty</span>
+  <span class="what">Everything starting with <code class="code-snippet">self._</code> is private state that <code class="code-snippet">index()</code> will fill in later. <code class="code-snippet">_inverted_index</code> is the core structure: a dict mapping each word to a list of <code class="code-snippet">(chunk_index, how_many_times)</code> pairs. <code class="code-snippet">_doc_lengths[i]</code> holds the token count of chunk number i. <code class="code-snippet">_avgdl</code> is the average of all those lengths.</span>
+  <span class="why">Why k1=1.5 and b=0.75: these are the BM25 standard defaults from the original paper, extensively validated across many corpora. k1 controls how much each additional occurrence of a word increases the score (higher = more credit). b controls how much long documents are penalized (0=none, 1=full).</span>
+</div>
+
+<div class="code-block">def index(self, chunks: list[Chunk]) -> None:
+    if not chunks:
+        raise ValueError("BM25Retriever.index() received an empty chunk list.")
+
+    self._chunks = list(chunks)
+    n = len(chunks)
+
+    forward: list[Counter[str]] = []
+    for chunk in chunks:
+        tf: Counter[str] = Counter(tokenize(chunk.text, remove_stops=True, stem=False))
+        forward.append(tf)
+        self._doc_lengths.append(sum(tf.values()))</div>
+
+<div class="line-entry">
+  <span class="label">Building the "forward index" — term frequencies per chunk</span>
+  <span class="what"><code class="code-snippet">Counter(tokenize(chunk.text))</code> — tokenize splits the chunk into clean words, Counter counts how often each word appears. <code class="code-snippet">sum(tf.values())</code> adds up all the counts to get the total word count of the chunk. This builds the "forward index" — for each chunk, what words and how many times.</span>
+  <span class="why">Why store doc_lengths: BM25 penalizes longer documents. A chunk with 500 words that mentions "tesla" once should score lower than a 50-word chunk that mentions it once. The length normalizes for this.</span>
+</div>
+
+<div class="code-block">    self._avgdl = sum(self._doc_lengths) / n if n > 0 else 1.0
+
+    self._inverted_index = defaultdict(list)
+    df: Counter[str] = Counter()
+    for chunk_idx, tf in enumerate(forward):
+        for term, freq in tf.items():
+            self._inverted_index[term].append((chunk_idx, freq))
+            df[term] += 1</div>
+
+<div class="line-entry math">
+  <span class="label">Building the inverted index — from forward to reverse lookup</span>
+  <span class="what"><code class="code-snippet">enumerate(forward)</code> gives (0, counter_for_chunk_0), (1, counter_for_chunk_1), etc. For each word in each chunk, we add <code class="code-snippet">(chunk_index, frequency)</code> to the inverted index. <code class="code-snippet">df[term] += 1</code> counts how many chunks contain this term (document frequency).</span>
+  <span class="why">This is the key data structure: instead of "for each chunk, what words does it contain?" it becomes "for each word, which chunks contain it?" Now when searching, you look up the query word and instantly get the list of relevant chunks — you never scan all chunks.</span>
+  <br>
+  <span class="what">Example result: <code class="code-snippet">_inverted_index["tesla"] = [(3, 2), (17, 5), (42, 1)]</code> means chunk 3 has "tesla" twice, chunk 17 has it five times, chunk 42 has it once.</span>
+</div>
+
+<div class="code-block">    self._idf = {}
+    for term, doc_freq in df.items():
+        self._idf[term] = math.log((n - doc_freq + 0.5) / (doc_freq + 0.5) + 1.0)</div>
+
+<div class="line-entry math">
+  <span class="label">IDF calculation — how rare is each word?</span>
+  <span class="what"><code class="code-snippet">n</code> = total chunks. <code class="code-snippet">doc_freq</code> = how many chunks contain this term. The formula <code class="code-snippet">log((n - df + 0.5) / (df + 0.5) + 1)</code> outputs a high number for rare words (df is small → numerator large) and a low number for common words (df is large → numerator small). The <code class="code-snippet">+ 1</code> outside the log prevents the IDF from going negative when df = n (word appears in every chunk).</span>
+  <span class="why">Why precompute: you need IDF for every search query. Computing it once during indexing means each search query just looks it up in <code class="code-snippet">self._idf</code> — O(1) lookup vs recomputing over the whole corpus on every query.</span>
+</div>
+
+<div class="code-block">def search(self, query: str, k: int = 10) -> list[ScoredChunk]:
+    if not self._indexed:
+        raise RuntimeError("BM25Retriever.search() called before index().")
+
+    query_terms = tokenize(query, remove_stops=True, stem=False)
+    if not query_terms:
+        return []
+
+    scores: dict[int, float] = {}
+    for term in query_terms:
+        if term not in self._inverted_index:
+            continue
+        idf = self._idf.get(term, 0.0)
+        for chunk_idx, tf in self._inverted_index[term]:
+            dl = self._doc_lengths[chunk_idx]
+            tf_norm = tf * (self.k1 + 1.0) / (
+                tf + self.k1 * (1.0 - self.b + self.b * dl / self._avgdl)
+            )
+            scores[chunk_idx] = scores.get(chunk_idx, 0.0) + idf * tf_norm</div>
+
+<div class="line-entry math">
+  <span class="label">The BM25 scoring loop</span>
+  <span class="what">For each query word: look it up in the inverted index → get the list of chunks that contain it → for each such chunk, compute the BM25 term score and add it to that chunk's running total. <code class="code-snippet">scores.get(chunk_idx, 0.0)</code> returns 0.0 if that chunk hasn't been scored yet (default for missing keys).</span>
+  <br><span class="what">The <code class="code-snippet">tf_norm</code> formula: <code class="code-snippet">tf * (k1+1) / (tf + k1*(1 - b + b*dl/avgdl))</code>. Breaking it down: the numerator grows with term frequency. The denominator also grows with tf but slower (saturation — tenth occurrence matters less than first). The <code class="code-snippet">b * dl/avgdl</code> part penalizes longer chunks.</span>
+  <span class="why">Why not just count occurrences: a chunk that says "Tesla Tesla Tesla Tesla Tesla" 50 times shouldn't score 50× better than one that mentions it once with important context. The saturation formula handles this.</span>
+</div>
+
+<div class="code-block">    ranked = sorted(
+        scores.items(),
+        key=lambda item: (-item[1], self._chunks[item[0]].chunk_id),
+    )
+
+    results: list[ScoredChunk] = []
+    for chunk_idx, score in ranked[:k]:
+        results.append(ScoredChunk(
+            chunk=self._chunks[chunk_idx],
+            score=score,
+            retriever=self.name,
+        ))
+    return results</div>
+
+<div class="line-entry pattern">
+  <span class="label">Sorting and building the result list</span>
+  <span class="what"><code class="code-snippet">scores.items()</code> gives <code class="code-snippet">[(chunk_idx, score), ...]</code>. <code class="code-snippet">key=lambda item: (-item[1], self._chunks[item[0]].chunk_id)</code> — the lambda is an anonymous function. It sorts by <code class="code-snippet">-score</code> first (negative so highest scores sort first) and by chunk_id second (for tie-breaking). <code class="code-snippet">ranked[:k]</code> takes the top k.</span>
+  <span class="why">Why sort descending: most relevant first. Why tie-break by chunk_id: without a tiebreaker, two chunks with the same score could appear in random order — making tests flaky and results non-reproducible. The chunk_id tie-break guarantees identical output every time.</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">7. retrieval/dense.py — Meaning-Based Search</h2>
+<!-- ======================================================= -->
+
+<p>Where BM25 matches exact words, dense retrieval matches <strong>meaning</strong>. It converts text into numerical vectors (embeddings) where similar texts have similar vectors. Finding relevant chunks = finding vectors close to the query vector.</p>
+
+<div class="concept-box">
+  <strong>The key idea:</strong><br>
+  "Who invented alternating current?" and "Tesla developed AC electricity" have no words in common — BM25 scores them 0. But their embedding vectors are close in 384-dimensional space, so dense retrieval scores them high. That's why combining both is better than either alone.
+</div>
+
+<div class="file-header">src/lodestone/retrieval/dense.py</div>
+<div class="code-block">from collections.abc import Callable
+import numpy as np
+from lodestone.retrieval.base import Retriever
+from lodestone.schemas import Chunk, ScoredChunk</div>
+
+<div class="line-entry">
+  <span class="label">Callable and numpy</span>
+  <span class="what"><code class="code-snippet">Callable</code> is a type hint for "something you can call like a function". Used to type-hint the optional <code class="code-snippet">encoder</code> parameter. <code class="code-snippet">numpy</code> (imported as <code class="code-snippet">np</code> by convention) is the numerical computing library that makes matrix math fast.</span>
+  <span class="library">Library: collections.abc is stdlib. numpy is third-party.</span>
+</div>
+
+<div class="code-block">def _l2_normalize(matrix: np.ndarray) -> np.ndarray:
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    norms = np.where(norms == 0.0, 1.0, norms)
+    matrix /= norms
+    return matrix</div>
+
+<div class="line-entry math">
+  <span class="label">L2 normalization — making all vectors unit length</span>
+  <span class="what"><code class="code-snippet">np.linalg.norm(matrix, axis=1)</code> computes the length (L2 norm) of each row vector. <code class="code-snippet">axis=1</code> means "compute across columns for each row". <code class="code-snippet">keepdims=True</code> keeps the result as shape (n,1) so it can broadcast-divide into the (n,d) matrix. <code class="code-snippet">np.where(norms==0.0, 1.0, norms)</code> replaces zeros with 1 (avoid division by zero). <code class="code-snippet">matrix /= norms</code> divides every element by its row's norm in-place.</span>
+  <span class="why">Why normalize: when all vectors have length 1, cosine similarity (angle between vectors) equals the dot product (vector multiplication). Dot products are extremely fast on numpy — one matrix multiply scores ALL chunks at once. Without normalization you'd need the full cosine formula for each pair.</span>
+</div>
+
+<div class="code-block">class DenseRetriever(Retriever):
+    name: str = "dense"
+
+    def __init__(self, model_name=None, batch_size=64,
+                 encoder: Callable[[list[str]], np.ndarray] | None = None):
+        self._model_name = model_name
+        self.batch_size = batch_size
+        self._encoder_override = encoder
+        self._st_model: object | None = None
+        self._chunks: list[Chunk] = []
+        self._vectors: np.ndarray | None = None
+        self._indexed: bool = False</div>
+
+<div class="line-entry pattern">
+  <span class="label">Injectable encoder — the testing pattern</span>
+  <span class="what"><code class="code-snippet">encoder: Callable[[list[str]], np.ndarray] | None = None</code> — if you pass a function here, it replaces the real SentenceTransformer model. The tests use this to pass a fake fast encoder instead of downloading a 90MB model. <code class="code-snippet">self._st_model: object | None = None</code> — the real model is None until first use.</span>
+  <span class="why">Why lazy loading: if you import dense.py at the top of your program, you don't want a 90MB model download to happen immediately. The model downloads only when the first real search happens. This is why offline tests are fast — they use the fake encoder and never trigger a download.</span>
+</div>
+
+<div class="code-block">def _encode(self, texts: list[str]) -> np.ndarray:
+    if self._encoder_override is not None:
+        result = self._encoder_override(texts)
+        return np.array(result, dtype=np.float32)
+
+    from sentence_transformers import SentenceTransformer  # lazy import
+
+    if self._st_model is None:
+        model_name = self._get_model_name()
+        self._st_model = SentenceTransformer(model_name)
+    embeddings = self._st_model.encode(texts, batch_size=self.batch_size,
+                                        show_progress_bar=False, convert_to_numpy=True)
+    return embeddings.astype(np.float32)</div>
+
+<div class="line-entry">
+  <span class="label">Lazy import inside the method</span>
+  <span class="what"><code class="code-snippet">from sentence_transformers import SentenceTransformer</code> is INSIDE the function, not at the top of the file. This means the import only runs when <code class="code-snippet">_encode()</code> is called. <code class="code-snippet">if self._st_model is None</code> means the model is created once and reused — not reloaded every search.</span>
+  <span class="why">Why: loading SentenceTransformer at module level would slow every import of this file and trigger a model download. Lazy loading keeps startup fast and only pays the cost when actually needed.</span>
+</div>
+
+<div class="code-block">def index(self, chunks: list[Chunk]) -> None:
+    self._chunks = list(chunks)
+    texts = [c.text for c in chunks]
+    matrix = self._encode(texts)
+    self._vectors = _l2_normalize(matrix)
+    self._indexed = True</div>
+
+<div class="line-entry">
+  <span class="label">[c.text for c in chunks] — list comprehension</span>
+  <span class="what">Extracts just the text field from every Chunk object into a plain list of strings. <code class="code-snippet">_encode(texts)</code> then converts all of them to a matrix of shape (n_chunks, 384) — one 384-dimensional vector per chunk. After L2 normalization, <code class="code-snippet">self._vectors</code> is a matrix where every row is a unit-length vector.</span>
+</div>
+
+<div class="code-block">def search(self, query: str, k: int = 10) -> list[ScoredChunk]:
+    q_vec = self._encode([query])        # shape (1, 384)
+    q_vec = _l2_normalize(q_vec)
+
+    scores = (self._vectors @ q_vec.T).squeeze(axis=1)   # shape (n,)
+
+    actual_k = min(k, len(self._chunks))
+    top_indices = np.argpartition(scores, -actual_k)[-actual_k:]
+
+    top_indices_sorted = sorted(
+        top_indices.tolist(),
+        key=lambda i: (-float(scores[i]), self._chunks[i].chunk_id),
+    )
+    ...</div>
+
+<div class="line-entry math">
+  <span class="label">Matrix multiply for cosine similarity</span>
+  <span class="what"><code class="code-snippet">self._vectors @ q_vec.T</code> — <code class="code-snippet">@</code> is the matrix multiply operator. <code class="code-snippet">self._vectors</code> is shape (n, 384), <code class="code-snippet">q_vec.T</code> is shape (384, 1), result is shape (n, 1). <code class="code-snippet">.squeeze(axis=1)</code> removes the trailing dimension → shape (n,). Each element is the cosine similarity between that chunk and the query.</span>
+  <span class="why">Why one matrix multiply instead of a loop: numpy executes this in optimized C/BLAS code. Scoring 1000 chunks takes microseconds. A Python for-loop over 1000 chunks doing individual dot products would take ~1000× longer.</span>
+  <br>
+  <span class="what"><code class="code-snippet">np.argpartition(scores, -actual_k)[-actual_k:]</code> — returns the indices of the top-k scores WITHOUT fully sorting. O(n) instead of O(n log n). Then we sort just those k indices.</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">8. retrieval/fusion.py — Combining BM25 + Dense</h2>
+<!-- ======================================================= -->
+
+<p>BM25 and Dense each return their own ranked list. Fusion merges them into one better list.</p>
+
+<div class="file-header">src/lodestone/retrieval/fusion.py</div>
+<div class="code-block">_EPSILON = 1e-9   # prevents divide-by-zero in min-max normalisation</div>
+
+<div class="line-entry">
+  <span class="label">Module-level constant</span>
+  <span class="what"><code class="code-snippet">1e-9</code> = 0.000000001. When dividing by <code class="code-snippet">(max - min)</code>, if max equals min (all scores identical), you'd divide by zero. Adding epsilon prevents the crash while being small enough to not affect real scores.</span>
+</div>
+
+<div class="code-block">class HybridRetriever(Retriever):
+    def __init__(self, retrievers, strategy="rrf", rrf_k=None, weights=None):
+        if not retrievers:
+            raise ValueError("HybridRetriever requires at least one child retriever.")
+        if strategy not in ("rrf", "weighted"):
+            raise ValueError(f"Unknown fusion strategy '{strategy}'.")
+        ...
+        self._retrievers = list(retrievers)
+        self._strategy = strategy</div>
+
+<div class="line-entry">
+  <span class="label">Input validation in __init__</span>
+  <span class="what">Three explicit checks before storing anything. Each raises a clear error message. <code class="code-snippet">if not retrievers</code> — an empty list is falsy in Python. <code class="code-snippet">strategy not in ("rrf", "weighted")</code> — the tuple is the allowed set of values.</span>
+  <span class="why">Why validate in __init__: fail fast and clearly. If you skip validation, you'd get a cryptic error deep in <code class="code-snippet">search()</code> when it's hard to trace back to the bad input.</span>
+</div>
+
+<div class="code-block">    @property
+    def name(self) -> str:
+        return "hybrid_rrf" if self._strategy == "rrf" else "hybrid_weighted"</div>
+
+<div class="line-entry pattern">
+  <span class="label">@property — computed attribute</span>
+  <span class="what"><code class="code-snippet">@property</code> makes a method callable without parentheses: <code class="code-snippet">retriever.name</code> not <code class="code-snippet">retriever.name()</code>. The name is computed from <code class="code-snippet">self._strategy</code> dynamically instead of being stored as a fixed string.</span>
+  <span class="why">Why a property here: because the name depends on the strategy, which could theoretically change. A property keeps the name always in sync with the actual strategy.</span>
+</div>
+
+<div class="code-block">def index(self, chunks: list[Chunk]) -> None:
+    for r in self._retrievers:
+        r.index(chunks)
+    self._indexed = True</div>
+
+<div class="line-entry">
+  <span class="label">Delegating index() to children</span>
+  <span class="what">The hybrid retriever doesn't index itself — it tells each child retriever to index. <code class="code-snippet">for r in self._retrievers</code> iterates over [bm25_retriever, dense_retriever] and calls <code class="code-snippet">index(chunks)</code> on each.</span>
+  <span class="why">Pattern: "delegate and coordinate" — the hybrid is a coordinator, not a doer. Each child handles its own indexing format (inverted index vs numpy matrix). The hybrid just orchestrates.</span>
+</div>
+
+<div class="code-block">def search(self, query: str, k: int = 10) -> list[ScoredChunk]:
+    fetch_k = k * 3
+    per_retriever: list[list[ScoredChunk]] = [
+        r.search(query, k=fetch_k) for r in self._retrievers
+    ]
+    if self._strategy == "rrf":
+        fused = self._fuse_rrf(per_retriever)
+    else:
+        fused = self._fuse_weighted(per_retriever)
+    return fused[:k]</div>
+
+<div class="line-entry">
+  <span class="label">Fetch k×3 then trim to k</span>
+  <span class="what">Each child retriever is asked for 30 results (if k=10). This gives the fusion algorithm more material to work with — a chunk ranked #12 by BM25 but #1 by Dense might be the true best result and would be missed if each retriever only returned top 10. After fusing, trim to k.</span>
+</div>
+
+<div class="code-block">def _fuse_rrf(self, per_retriever):
+    rrf_scores: dict[str, float] = {}
+    chunk_by_id: dict[str, Chunk] = {}
+
+    for results in per_retriever:
+        for rank, sc in enumerate(results, start=1):
+            cid = sc.chunk.chunk_id
+            rrf_scores[cid] = rrf_scores.get(cid, 0.0) + 1.0 / (self._rrf_k + rank)
+            if cid not in chunk_by_id:
+                chunk_by_id[cid] = sc.chunk</div>
+
+<div class="line-entry math">
+  <span class="label">RRF — Reciprocal Rank Fusion</span>
+  <span class="what"><code class="code-snippet">enumerate(results, start=1)</code> gives (1, first_result), (2, second_result), etc. — 1-indexed ranks. For each chunk, its RRF score += <code class="code-snippet">1.0 / (60 + rank)</code>. A chunk ranked #1 by BM25 gets 1/61 ≈ 0.016. Ranked #30 gets 1/90 ≈ 0.011. A chunk ranked #1 by BOTH gets 0.016 + 0.016 = 0.032 and rises to the top. <code class="code-snippet">chunk_by_id</code> deduplicates — same chunk from two retrievers is stored once.</span>
+  <span class="why">Why RRF over raw score combination: BM25 and Dense scores have completely different scales and distributions. BM25 might output 0–15, Dense 0–1. You can't add them directly. RRF uses only RANK, which is scale-agnostic. It's also been shown empirically to outperform most weighted combinations without tuning.</span>
+</div>
+
+<div class="code-block">def _fuse_weighted(self, per_retriever):
+    for results in per_retriever:
+        raw_scores = [sc.score for sc in results]
+        min_s = min(raw_scores)
+        max_s = max(raw_scores)
+        denom = max_s - min_s + _EPSILON
+        norm_map = {sc.chunk.chunk_id: (sc.score - min_s) / denom for sc in results}
+    ...
+    for cid in chunk_by_id:
+        total = sum(w * norm_map.get(cid, 0.0) for w, norm_map in zip(self._weights, normalised_maps))
+        fused_scores[cid] = total</div>
+
+<div class="line-entry math">
+  <span class="label">Min-max normalization then weighted sum</span>
+  <span class="what">For each retriever's results: subtract the minimum score, divide by the range → all scores land in [0,1]. Then multiply each score by its retriever's weight and add them together. <code class="code-snippet">norm_map.get(cid, 0.0)</code> gives 0 if a chunk wasn't in a retriever's results (it's penalized for not appearing).</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">9. retrieval/expansion.py — Query Expansion (RM3)</h2>
+<!-- ======================================================= -->
+
+<p>If you search for "cardiac arrest", you might miss documents that say "heart attack". Query expansion automatically adds related terms to your query before searching.</p>
+
+<div class="file-header">src/lodestone/retrieval/expansion.py</div>
+<div class="code-block">class Rm3QueryExpander:
+    def __init__(self, retriever, fb_docs=5, fb_terms=8, orig_weight=0.6):
+        self._retriever = retriever
+        self.fb_docs = fb_docs
+        self.fb_terms = fb_terms
+        self.orig_weight = orig_weight</div>
+
+<div class="line-entry">
+  <span class="label">RM3 parameters</span>
+  <span class="what"><code class="code-snippet">fb_docs=5</code> — use the top 5 retrieved chunks as "pseudo-relevant" (assume the retriever's top results are probably correct). <code class="code-snippet">fb_terms=8</code> — add 8 new words to the query. <code class="code-snippet">orig_weight=0.6</code> — reserved for future probability weighting; currently informational only.</span>
+</div>
+
+<div class="code-block">def expand(self, query: str) -> str:
+    query_terms: set[str] = set(tokenize(query, remove_stops=True, stem=False))
+
+    pseudo_relevant: list[ScoredChunk] = self._retriever.search(query, k=self.fb_docs)
+
+    tf: Counter[str] = Counter()
+    for sc in pseudo_relevant:
+        tokens = tokenize(sc.chunk.text, remove_stops=True, stem=False)
+        tf.update(tokens)
+
+    expansion_terms: list[str] = []
+    for term, _ in tf.most_common():
+        if term not in query_terms:
+            expansion_terms.append(term)
+        if len(expansion_terms) >= self.fb_terms:
+            break
+
+    return query + " " + " ".join(expansion_terms)</div>
+
+<div class="line-entry math">
+  <span class="label">The RM3 algorithm step by step</span>
+  <span class="what">
+    Step 1: <code class="code-snippet">set(tokenize(query))</code> — what words are already in the query? (We won't add these again.)<br>
+    Step 2: <code class="code-snippet">self._retriever.search(query, k=fb_docs)</code> — run the original query, get top 5 chunks.<br>
+    Step 3: <code class="code-snippet">Counter(); tf.update(tokens)</code> — count word frequencies across ALL 5 chunks combined.<br>
+    Step 4: <code class="code-snippet">tf.most_common()</code> — returns [(word, count)] sorted most-frequent first. Pick the top 8 words NOT already in the query.<br>
+    Step 5: append them to the query string.
+  </span>
+  <span class="why">Why this works: if you search "machine learning" and the top results all contain "neural", "gradient", "optimization" — those are probably relevant expansion terms. Adding them to the query improves recall on the next (real) search.</span>
+</div>
+
+<div class="code-block">class ExpandingRetriever(Retriever):
+    def __init__(self, inner: Retriever, expander: Rm3QueryExpander):
+        self._inner = inner
+        self._expander = expander
+
+    @property
+    def name(self) -> str:
+        return f"rm3+{self._inner.name}"
+
+    def search(self, query: str, k: int = 10) -> list[ScoredChunk]:
+        expanded = self._expander.expand(query)
+        results = self._inner.search(expanded, k=k)
+        return [ScoredChunk(chunk=sc.chunk, score=sc.score, retriever=self.name)
+                for sc in results]</div>
+
+<div class="line-entry pattern">
+  <span class="label">The Wrapper / Decorator pattern</span>
+  <span class="what">ExpandingRetriever doesn't do retrieval itself — it wraps another retriever and adds a step before delegating. <code class="code-snippet">f"rm3+{self._inner.name}"</code> — f-string interpolation. Result: "rm3+bm25". This pattern (wrapping an object to add behavior) is called the "Decorator pattern".</span>
+  <span class="why">Why: you can add RM3 to ANY retriever (BM25, Dense, Hybrid) without changing their code. Just wrap them. This is "composition over inheritance" — a core software design principle.</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">10. retrieval/rerank.py — Cross-Encoder Reranking</h2>
+<!-- ======================================================= -->
+
+<p>The hybrid retriever returns ~30 candidates. The reranker reads each one carefully alongside the query and re-scores them — picking the truly best 5–10.</p>
+
+<div class="concept-box">
+  <strong>Bi-encoder vs Cross-encoder:</strong><br>
+  Dense retrieval uses a bi-encoder: query and chunks are encoded separately into vectors, then compared. Fast (compare pre-computed vectors), but the query and chunk never "see" each other during encoding.<br><br>
+  The cross-encoder encodes the (query, chunk) PAIR together. Full attention across both texts. Much more accurate, but 100× slower — so you only run it on the top ~30 candidates, not the whole corpus.
+</div>
+
+<div class="file-header">src/lodestone/retrieval/rerank.py</div>
+<div class="code-block">def _sigmoid(x: np.ndarray) -> np.ndarray:
+    x_clipped = np.clip(x, -88.0, 88.0)
+    return 1.0 / (1.0 + np.exp(-x_clipped))</div>
+
+<div class="line-entry math">
+  <span class="label">Sigmoid function — converting logits to probabilities</span>
+  <span class="what"><code class="code-snippet">sigmoid(x) = 1 / (1 + e^(-x))</code>. Converts any real number to a value between 0 and 1. Large positive x → score near 1. Large negative x → score near 0. Zero → 0.5. <code class="code-snippet">np.clip(x, -88, 88)</code> prevents overflow: <code class="code-snippet">np.exp(89)</code> exceeds float32 range and returns infinity.</span>
+  <span class="why">Why sigmoid: the cross-encoder outputs raw logits (unbounded numbers). Sigmoid maps them to [0,1] so scores are interpretable as approximate relevance probabilities and comparable across different queries.</span>
+</div>
+
+<div class="code-block">class CrossEncoderReranker:
+    def __init__(self, model_name=None, batch_size=32,
+                 scorer: Callable[[list[tuple[str,str]]], np.ndarray] | None = None):
+        self._model_name = model_name
+        self.batch_size = batch_size
+        self._scorer_override = scorer
+        self._ce_model: object | None = None</div>
+
+<div class="line-entry">
+  <span class="label">Same lazy-load + injectable scorer pattern as DenseRetriever</span>
+  <span class="what"><code class="code-snippet">Callable[[list[tuple[str,str]]], np.ndarray]</code> — the type hint reads: "a callable that takes a list of (string, string) tuples and returns a numpy array". This is the signature of both the real CrossEncoder and the fake test scorer.</span>
+</div>
+
+<div class="code-block">def rerank(self, query, candidates, top_k=5):
+    pairs: list[tuple[str, str]] = [(query, sc.chunk.text) for sc in candidates]
+
+    logits = self._score_pairs(pairs)
+    scores = _sigmoid(logits)
+
+    reranked: list[ScoredChunk] = []
+    for sc, new_score in zip(candidates, scores.tolist()):
+        orig_name = sc.retriever or "unknown"
+        reranked.append(ScoredChunk(
+            chunk=sc.chunk,
+            score=float(new_score),
+            retriever=f"rerank({orig_name})",
+        ))
+
+    reranked.sort(key=lambda x: (-x.score, x.chunk.chunk_id))
+    return reranked[:top_k]</div>
+
+<div class="line-entry">
+  <span class="label">zip() — pairing two lists together</span>
+  <span class="what"><code class="code-snippet">zip(candidates, scores.tolist())</code> pairs each candidate with its new score: (candidate_0, score_0), (candidate_1, score_1), etc. <code class="code-snippet">scores.tolist()</code> converts the numpy array to a plain Python list. <code class="code-snippet">f"rerank({orig_name})"</code> updates the retriever label — so you can see in the UI that a chunk was reranked from "hybrid_rrf".</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">11. engine.py — The Master Coordinator</h2>
+<!-- ======================================================= -->
+
+<p>Every component so far is independent. The engine is the one file that wires everything together. The dashboard, API, and CLI all use the engine — they never import retrievers or generators directly.</p>
+
+<div class="file-header">src/lodestone/engine.py</div>
+<div class="code-block">class LodestoneEngine:
+    def __init__(self, settings=None):
+        if settings is None:
+            from lodestone.config import get_settings
+            settings = get_settings()
+        self._settings = settings
+        self._retriever = None
+        self._reranker = None
+        self._faithfulness_scorer = None
+        self._loaded = False
+        self._use_rerank = False</div>
+
+<div class="line-entry pattern">
+  <span class="label">Lazy initialization pattern</span>
+  <span class="what">Everything is None at construction. Nothing is loaded until <code class="code-snippet">load()</code> is called. This means creating an engine is instant — no models downloaded, no files read. The heavy work happens on demand. <code class="code-snippet">if settings is None: settings = get_settings()</code> — lets callers inject a custom settings object (useful for tests) or use the global defaults.</span>
+</div>
+
+<div class="code-block">def load(self, use_rerank=True):
+    if self._loaded and self._use_rerank == use_rerank:
+        return  # idempotent
+
+    from lodestone.chunking.strategies import FixedSizeChunker
+    from lodestone.data import load_corpus
+    from lodestone.retrieval import CrossEncoderReranker, build_default_pipeline
+
+    documents = load_corpus()
+    chunker = FixedSizeChunker()
+    chunks = []
+    for doc in documents:
+        chunks.extend(chunker.chunk(doc))
+
+    self._retriever = build_default_pipeline(chunks, settings=self._settings)
+    if use_rerank:
+        self._reranker = CrossEncoderReranker()
+    self._loaded = True</div>
+
+<div class="line-entry">
+  <span class="label">Idempotent loading</span>
+  <span class="what"><code class="code-snippet">if self._loaded and self._use_rerank == use_rerank: return</code> — calling <code class="code-snippet">load()</code> twice does nothing on the second call. <strong>Idempotent</strong> means "calling multiple times has the same effect as calling once". <code class="code-snippet">chunks.extend(chunker.chunk(doc))</code> — <code class="code-snippet">extend</code> adds all items from one list into another (vs <code class="code-snippet">append</code> which adds the list itself as one item).</span>
+  <span class="why">Why: Streamlit reruns its script on every user interaction. Without idempotency, models would reload every time someone moves the k-slider. The check prevents that.</span>
+</div>
+
+<div class="code-block">def search(self, query, k=10):
+    self._ensure_loaded()
+    if self._use_rerank and self._reranker is not None:
+        candidates = retriever.search(query, k=k * 3)
+        results = reranker.rerank(query, candidates, top_k=k)
+    else:
+        results = retriever.search(query, k=k)
+    return results</div>
+
+<div class="line-entry">
+  <span class="label">Two-stage retrieval in 4 lines</span>
+  <span class="what">When reranking is ON: get 3× more candidates than needed (k*3), then rerank to pick the best k. When OFF: just get k directly. The <code class="code-snippet">_ensure_loaded()</code> call triggers lazy loading if this is the first search — no manual setup required.</span>
+</div>
+
+<div class="code-block">def ask(self, query, k=5, score_faithfulness=False):
+    t_start = time.perf_counter()
+
+    chunks = self.search(query, k=k)
+
+    answerer = get_answerer(settings=self._settings)
+    answer = answerer.answer(query, chunks)
+
+    if score_faithfulness:
+        if self._faithfulness_scorer is None:
+            self._faithfulness_scorer = NliFaithfulnessScorer()
+        answer = answer.model_copy(update={"faithfulness": scorer.score(answer.text, chunks)})
+
+    latency_ms = (time.perf_counter() - t_start) * 1000.0
+    answer = answer.model_copy(update={"latency_ms": latency_ms})
+    return answer</div>
+
+<div class="line-entry pattern">
+  <span class="label">time.perf_counter() — precise timing</span>
+  <span class="what"><code class="code-snippet">time.perf_counter()</code> returns the current time in fractional seconds with nanosecond precision. Taking the difference at the end gives total elapsed time. Multiply by 1000 for milliseconds.</span>
+</div>
+
+<div class="line-entry pattern">
+  <span class="label">answer.model_copy(update={...}) — immutable update</span>
+  <span class="what">Pydantic v2 models are designed to be immutable (you shouldn't change their fields after creation). <code class="code-snippet">model_copy(update={"faithfulness": 0.87})</code> creates a NEW Answer object that's identical to the original except for the faithfulness field. The original is unchanged.</span>
+  <span class="why">Why immutable: if you passed the same Answer object to multiple places and mutated it, one place's change would surprise another. Immutable objects are predictable and safe to pass around freely.</span>
+</div>
+
+<div class="code-block">_engine_instance: LodestoneEngine | None = None
+
+def get_engine() -> LodestoneEngine:
+    global _engine_instance
+    if _engine_instance is None:
+        _engine_instance = LodestoneEngine()
+        _engine_instance.load()
+    return _engine_instance</div>
+
+<div class="line-entry pattern">
+  <span class="label">Module-level singleton via global variable</span>
+  <span class="what"><code class="code-snippet">_engine_instance</code> is a module-level variable (lives in the module, not in a class). <code class="code-snippet">global _engine_instance</code> inside the function declares that the function will write to the module-level variable (not create a local one). On first call: creates and loads the engine, stores it. On every subsequent call: returns the stored instance.</span>
+  <span class="why">Why: the API server, CLI, and dashboard all need the same loaded engine. Without a singleton, each one would create its own engine and download models three times. The global ensures one shared, loaded instance across the whole process.</span>
+</div>
+
+<hr class="section-divider">
+
+<!-- ======================================================= -->
+<h2 class="page-break">12. Key Python Patterns Reference</h2>
+<!-- ======================================================= -->
+
+<p>These are the recurring patterns used throughout the project. Learn these and you can read almost any Python codebase.</p>
+
+<table>
+  <tr><th>Pattern</th><th>Syntax</th><th>What it does</th><th>When to use it</th></tr>
+  <tr><td>List comprehension</td><td><code>[x for x in items if condition]</code></td><td>Build a filtered/transformed list in one line</td><td>Whenever you'd write a for-loop that appends to a list</td></tr>
+  <tr><td>Default factory</td><td><code>Field(default_factory=list)</code></td><td>Calls list() to create a fresh default each time</td><td>Whenever a mutable default (list, dict) is a field</td></tr>
+  <tr><td>f-string</td><td><code>f"rm3+{self.name}"</code></td><td>Embeds variable values into a string</td><td>Whenever building strings with variable parts</td></tr>
+  <tr><td>Lazy import</td><td>import inside a function/method</td><td>Delays the import until the code path runs</td><td>Heavy libraries that should not load at startup</td></tr>
+  <tr><td>@property</td><td><code>@property def name(self): ...</code></td><td>Makes a method look like an attribute</td><td>Computed attributes that depend on internal state</td></tr>
+  <tr><td>Abstract base class</td><td><code>class Foo(ABC): @abstractmethod def bar(): ...</code></td><td>Forces subclasses to implement methods</td><td>Defining interfaces / contracts</td></tr>
+  <tr><td>@lru_cache</td><td><code>@functools.lru_cache(maxsize=1)</code></td><td>Caches function return value</td><td>Expensive computations that return the same value repeatedly</td></tr>
+  <tr><td>Singleton via global</td><td><code>_instance = None; def get(): global _instance...</code></td><td>One shared instance across the whole process</td><td>Expensive objects (models, DB connections) shared by all callers</td></tr>
+  <tr><td>Wrapper / Decorator pattern</td><td><code>class Wrapper: def __init__(self, inner): ...</code></td><td>Adds behavior around another object without modifying it</td><td>Adding RM3 to any retriever, adding logging to any function</td></tr>
+  <tr><td>Enumerate</td><td><code>for i, item in enumerate(lst, start=1):</code></td><td>Gets both index and value in a for loop</td><td>When you need the position of each item, like computing ranks</td></tr>
+  <tr><td>zip()</td><td><code>for a, b in zip(list1, list2):</code></td><td>Pairs elements from two lists together</td><td>When two parallel lists correspond to each other</td></tr>
+  <tr><td>dict.get(key, default)</td><td><code>scores.get(idx, 0.0)</code></td><td>Returns default instead of crashing on missing key</td><td>When a key might not exist yet (accumulating scores)</td></tr>
+  <tr><td>X | None type</td><td><code>float | None</code></td><td>The value is either a float or None</td><td>Optional fields that may not be computed yet</td></tr>
+  <tr><td>model_copy(update={})</td><td>Pydantic v2 method</td><td>Creates a new model with some fields changed</td><td>When you need a modified version of an immutable model</td></tr>
+</table>
+
+<hr class="section-divider">
+
+<div class="concept-box">
+  <strong>Final mental model — the data flow one more time:</strong><br><br>
+  corpus.jsonl → <strong>load_corpus()</strong> → list[Document]<br>
+  → <strong>FixedSizeChunker.chunk()</strong> → list[Chunk]<br>
+  → <strong>BM25Retriever.index()</strong> + <strong>DenseRetriever.index()</strong><br>
+  <br>
+  query → <strong>HybridRetriever.search()</strong> → list[ScoredChunk] (30 candidates)<br>
+  → <strong>CrossEncoderReranker.rerank()</strong> → list[ScoredChunk] (top 5)<br>
+  → <strong>ExtractiveAnswerer.answer()</strong> → Answer (text = chunks[0].text)<br>
+  → Dashboard / API / CLI
+</div>
+
+<p style="margin-top: 40px; color: #888; font-size: 0.85em;">To save as PDF: open this file in your browser → File → Print → Save as PDF. Use "Letter" or "A4" paper size.</p>
+
+</body>
+</html>

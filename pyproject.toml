@@ -1,0 +1,210 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# ---------------------------------------------------------------------------
+# Project metadata
+# ---------------------------------------------------------------------------
+
+[project]
+name = "lodestone"
+version = "0.1.0"
+description = "A hybrid retrieval engine built from first principles — and the evaluation lab to prove it works."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Lodestone Authors" }]
+keywords = ["rag", "retrieval", "bm25", "dense-retrieval", "hybrid-search", "evaluation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Indexing",
+]
+
+# ---------------------------------------------------------------------------
+# Runtime dependencies
+# All deps the whole project needs — later waves must NOT edit this section.
+# ---------------------------------------------------------------------------
+
+dependencies = [
+    # Core data modelling
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+
+    # Numerical / scientific
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "scikit-learn>=1.3",
+
+    # Retrieval models
+    "sentence-transformers>=2.7",
+
+    # Data wrangling & visualisation
+    "pandas>=2.0",
+    "matplotlib>=3.7",
+
+    # API server
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+
+    # CLI
+    "typer>=0.12",
+    "rich>=13.0",
+
+    # Dashboard
+    "streamlit>=1.35",
+
+    # HTTP client (for Claude API and dataset downloads)
+    "httpx>=0.27",
+
+    # Anthropic SDK (optional generation backend)
+    "anthropic>=0.28",
+
+    # HuggingFace datasets (eval dataset download / caching)
+    "datasets>=2.19",
+
+    # Progress bars
+    "tqdm>=4.66",
+]
+
+# ---------------------------------------------------------------------------
+# Optional / dev dependencies
+# ---------------------------------------------------------------------------
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    # Type stubs
+    "types-tqdm",
+]
+
+# ---------------------------------------------------------------------------
+# Console scripts
+# ---------------------------------------------------------------------------
+
+[project.scripts]
+lodestone = "lodestone.cli:app"
+
+# ---------------------------------------------------------------------------
+# Hatchling build configuration (src layout)
+# ---------------------------------------------------------------------------
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lodestone"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "evals/",
+    "tests/",
+    "scripts/",
+    "pyproject.toml",
+    "README.md",
+    "Makefile",
+    ".env.example",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff linter / formatter configuration
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+src = ["src"]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ANN", # flake8-annotations (type hints)
+    "D",   # pydocstyle
+]
+ignore = [
+    "D100",  # Missing docstring in public module  (handled per-module)
+    "D104",  # Missing docstring in public package (handled per __init__.py)
+    "D203",  # one-blank-line-before-class (conflicts with D211)
+    "D213",  # multi-line-summary-second-line (conflicts with D212)
+    "ANN101", # missing self type annotation
+    "ANN102", # missing cls type annotation
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "D", "F811", "F841", "B007", "E501", "B905"]
+"scripts/**" = ["ANN", "D", "E402", "B007"]
+"evals/**" = ["ANN", "D", "ANN401", "ANN202", "B905", "E501"]
+"dashboard/**" = ["ANN", "D", "E402", "E501"]
+"src/lodestone/chunking/__init__.py" = ["E402", "D205"]
+"src/lodestone/chunking/strategies.py" = ["D107"]
+"src/lodestone/engine.py" = ["D107", "ANN001"]
+"src/lodestone/generation/claude.py" = ["D107"]
+"src/lodestone/generation/extractive.py" = ["D107"]
+"src/lodestone/generation/faithfulness.py" = ["D107"]
+"src/lodestone/retrieval/bm25.py" = ["D107", "B905", "D301"]
+"src/lodestone/retrieval/dense.py" = ["D107"]
+"src/lodestone/retrieval/expansion.py" = ["D107", "B905"]
+"src/lodestone/retrieval/fusion.py" = ["D107", "B905"]
+"src/lodestone/retrieval/rerank.py" = ["D107", "B905"]
+"src/lodestone/retrieval/__init__.py" = ["ANN001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["lodestone"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ---------------------------------------------------------------------------
+# Pytest configuration
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--tb=short",
+    "-q",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
+    "online: marks tests that require a network connection",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+source = ["src/lodestone"]
+omit = ["*/tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.10"
+mypy_path = "src"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
