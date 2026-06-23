@@ -249,9 +249,7 @@ class SentenceWindowChunker:
         if stride < 1:
             raise ValueError(f"stride ({stride}) must be >= 1")
         if stride > window_size:
-            raise ValueError(
-                f"stride ({stride}) should be <= window_size ({window_size})"
-            )
+            raise ValueError(f"stride ({stride}) should be <= window_size ({window_size})")
         self.window_size = window_size
         self.stride = stride
 
@@ -270,9 +268,7 @@ class SentenceWindowChunker:
         """
         text = doc.text.strip()
         if not text:
-            logger.debug(
-                "SentenceWindowChunker: doc '%s' has empty text, returning []", doc.doc_id
-            )
+            logger.debug("SentenceWindowChunker: doc '%s' has empty text, returning []", doc.doc_id)
             return []
 
         sentences = _split_sentences(text)

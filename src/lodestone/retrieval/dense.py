@@ -123,16 +123,16 @@ class DenseRetriever(Retriever):
         batch_size: int = 64,
         encoder: Callable[[list[str]], np.ndarray] | None = None,
     ) -> None:
-        self._model_name = model_name          # resolved lazily if None
+        self._model_name = model_name  # resolved lazily if None
         self.batch_size = batch_size
-        self._encoder_override = encoder       # for testing / custom backends
+        self._encoder_override = encoder  # for testing / custom backends
 
         # Cached SentenceTransformer instance (loaded once on first encode call)
         self._st_model: object | None = None
 
         # Internal state populated by index()
         self._chunks: list[Chunk] = []
-        self._vectors: np.ndarray | None = None   # shape (n, d), float32, L2-normed
+        self._vectors: np.ndarray | None = None  # shape (n, d), float32, L2-normed
         self._indexed: bool = False
 
     # ------------------------------------------------------------------
@@ -237,11 +237,11 @@ class DenseRetriever(Retriever):
             raise RuntimeError("DenseRetriever.search() called before index().")
 
         # Encode and normalise query
-        q_vec = self._encode([query])            # shape (1, d)
-        q_vec = _l2_normalize(q_vec)             # still (1, d)
+        q_vec = self._encode([query])  # shape (1, d)
+        q_vec = _l2_normalize(q_vec)  # still (1, d)
 
         # Cosine similarities: (n,)
-        scores = (self._vectors @ q_vec.T).squeeze(axis=1)   # shape (n,)
+        scores = (self._vectors @ q_vec.T).squeeze(axis=1)  # shape (n,)
 
         n = len(self._chunks)
         actual_k = min(k, n)

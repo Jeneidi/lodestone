@@ -76,12 +76,12 @@ def get_answerer(
 
     if settings is None:
         from lodestone.config import get_settings  # noqa: PLC0415
+
         settings = get_settings()
 
     generation_enabled: bool = getattr(settings, "generation_enabled", False)
-    api_key: str | None = (
-        getattr(settings, "anthropic_api_key", None)
-        or os.environ.get("ANTHROPIC_API_KEY")
+    api_key: str | None = getattr(settings, "anthropic_api_key", None) or os.environ.get(
+        "ANTHROPIC_API_KEY"
     )
 
     if generation_enabled and api_key:

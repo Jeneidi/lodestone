@@ -22,6 +22,7 @@ from lodestone.schemas import Document, QAExample
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _write_jsonl(path: Path, objects: list) -> None:
     """Write a list of Pydantic models to *path* as JSONL (one JSON object per line)."""
     with path.open("w", encoding="utf-8") as fh:
@@ -32,6 +33,7 @@ def _write_jsonl(path: Path, objects: list) -> None:
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_documents() -> list[Document]:
@@ -80,8 +82,8 @@ def sample_qa_examples() -> list[QAExample]:
 # Round-trip tests
 # ---------------------------------------------------------------------------
 
-class TestLoadCorpus:
 
+class TestLoadCorpus:
     def test_roundtrip_explicit_file_path(self, tmp_path: Path, sample_documents: list[Document]):
         """Write JSONL → load with explicit file path → assert exact equality."""
         corpus_file = tmp_path / "corpus.jsonl"
@@ -156,7 +158,6 @@ class TestLoadCorpus:
 
 
 class TestLoadQA:
-
     def test_roundtrip_explicit_file_path(
         self, tmp_path: Path, sample_qa_examples: list[QAExample]
     ):
@@ -173,9 +174,7 @@ class TestLoadQA:
             assert result.answer == original.answer
             assert result.relevant_doc_ids == original.relevant_doc_ids
 
-    def test_roundtrip_directory_path(
-        self, tmp_path: Path, sample_qa_examples: list[QAExample]
-    ):
+    def test_roundtrip_directory_path(self, tmp_path: Path, sample_qa_examples: list[QAExample]):
         """When path is a directory, load_qa appends 'qa.jsonl' automatically."""
         qa_file = tmp_path / "qa.jsonl"
         _write_jsonl(qa_file, sample_qa_examples)
@@ -246,6 +245,7 @@ class TestLoadQA:
 # ---------------------------------------------------------------------------
 # Combined round-trip (corpus + qa together)
 # ---------------------------------------------------------------------------
+
 
 class TestCombinedRoundTrip:
     """Write both files into the same directory, load both via directory path."""

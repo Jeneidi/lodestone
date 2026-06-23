@@ -64,10 +64,11 @@ class LodestoneEngine:
     def __init__(self, settings: object | None = None) -> None:
         if settings is None:
             from lodestone.config import get_settings  # noqa: PLC0415
+
             settings = get_settings()
         self._settings = settings
-        self._retriever: object | None = None          # HybridRetriever once loaded
-        self._reranker: object | None = None           # CrossEncoderReranker or None
+        self._retriever: object | None = None  # HybridRetriever once loaded
+        self._reranker: object | None = None  # CrossEncoderReranker or None
         self._faithfulness_scorer: object | None = None  # NliFaithfulnessScorer or None
         self._loaded: bool = False
         self._use_rerank: bool = False
@@ -172,11 +173,13 @@ class LodestoneEngine:
         self._ensure_loaded()
 
         from lodestone.retrieval import HybridRetriever  # noqa: PLC0415
+
         retriever: HybridRetriever = self._retriever  # type: ignore[assignment]
 
         if self._use_rerank and self._reranker is not None:
             candidates = retriever.search(query, k=k * 3)
             from lodestone.retrieval import CrossEncoderReranker  # noqa: PLC0415
+
             reranker: CrossEncoderReranker = self._reranker  # type: ignore[assignment]
             results = reranker.rerank(query, candidates, top_k=k)
         else:
@@ -226,6 +229,7 @@ class LodestoneEngine:
         chunks = self.search(query, k=k)
 
         from lodestone.generation import NliFaithfulnessScorer, get_answerer  # noqa: PLC0415
+
         answerer = get_answerer(settings=self._settings)
         answer = answerer.answer(query, chunks)
 
@@ -234,9 +238,7 @@ class LodestoneEngine:
                 logger.info("LodestoneEngine: initialising NLI faithfulness scorer.")
                 self._faithfulness_scorer = NliFaithfulnessScorer()
             scorer: NliFaithfulnessScorer = self._faithfulness_scorer  # type: ignore[assignment]
-            answer = answer.model_copy(
-                update={"faithfulness": scorer.score(answer.text, chunks)}
-            )
+            answer = answer.model_copy(update={"faithfulness": scorer.score(answer.text, chunks)})
 
         latency_ms = (time.perf_counter() - t_start) * 1000.0
         answer = answer.model_copy(update={"latency_ms": latency_ms})

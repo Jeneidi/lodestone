@@ -116,6 +116,7 @@ class AskRequest(BaseModel):
 # Engine dependency
 # ---------------------------------------------------------------------------
 
+
 def _get_engine() -> object:
     """FastAPI dependency that returns the loaded engine or raises 503.
 
@@ -128,6 +129,7 @@ def _get_engine() -> object:
     """
     try:
         from lodestone.engine import get_engine  # noqa: PLC0415
+
         return get_engine()
     except FileNotFoundError as exc:
         logger.warning("Engine not available: %s", exc)
@@ -178,6 +180,7 @@ async def health(request: Request) -> JSONResponse:
     """
     try:
         from lodestone.engine import get_engine  # noqa: PLC0415
+
         engine = get_engine()
         corpus_loaded: bool = getattr(engine, "_loaded", False)
     except FileNotFoundError:
@@ -203,6 +206,7 @@ async def search(body: SearchRequest, engine: EngineDep) -> SearchResponse:
     t0 = time.perf_counter()
 
     from lodestone.engine import LodestoneEngine  # noqa: PLC0415
+
     eng: LodestoneEngine = engine  # type: ignore[assignment]
     hits = eng.search(body.query, k=body.k)
 
@@ -237,6 +241,7 @@ async def ask(body: AskRequest, engine: EngineDep) -> Answer:
 
     """
     from lodestone.engine import LodestoneEngine  # noqa: PLC0415
+
     eng: LodestoneEngine = engine  # type: ignore[assignment]
     return eng.ask(
         query=body.query,

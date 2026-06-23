@@ -19,6 +19,7 @@ from lodestone.schemas import Document
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_doc(doc_id: str, text: str) -> Document:
     return Document(doc_id=doc_id, title="", text=text, source="test")
 
@@ -31,8 +32,8 @@ def _word_count(text: str) -> int:
 # FixedSizeChunker
 # ---------------------------------------------------------------------------
 
-class TestFixedSizeChunker:
 
+class TestFixedSizeChunker:
     def test_invalid_overlap_raises(self):
         with pytest.raises(ValueError, match="overlap"):
             FixedSizeChunker(chunk_size=10, overlap=10)
@@ -65,7 +66,10 @@ class TestFixedSizeChunker:
         overlap = 2
         chunker = FixedSizeChunker(chunk_size=chunk_size, overlap=overlap)
         # 15-word document
-        doc = _make_doc("d1", "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen")
+        doc = _make_doc(
+            "d1",
+            "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen",
+        )
         chunks = chunker.chunk(doc)
         for chunk in chunks:
             assert _word_count(chunk.text) <= chunk_size
@@ -93,7 +97,7 @@ class TestFixedSizeChunker:
             tail_a = words_a[-overlap:]
             head_b = words_b[:overlap]
             assert tail_a == head_b, (
-                f"Chunk {i} tail {tail_a!r} does not match chunk {i+1} head {head_b!r}"
+                f"Chunk {i} tail {tail_a!r} does not match chunk {i + 1} head {head_b!r}"
             )
 
     def test_all_words_covered(self):
@@ -175,8 +179,8 @@ class TestFixedSizeChunker:
 # SentenceWindowChunker
 # ---------------------------------------------------------------------------
 
-class TestSentenceWindowChunker:
 
+class TestSentenceWindowChunker:
     def test_invalid_stride_zero_raises(self):
         with pytest.raises(ValueError, match="stride"):
             SentenceWindowChunker(window_size=3, stride=0)
@@ -219,9 +223,7 @@ class TestSentenceWindowChunker:
     def test_window_size_respected(self):
         """Each chunk contains at most window_size sentences."""
         chunker = SentenceWindowChunker(window_size=2, stride=1)
-        text = (
-            "Alpha. Beta. Gamma. Delta. Epsilon."
-        )
+        text = "Alpha. Beta. Gamma. Delta. Epsilon."
         doc = _make_doc("ws", text)
         chunks = chunker.chunk(doc)
         for chunk in chunks:

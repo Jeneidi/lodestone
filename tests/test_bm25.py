@@ -28,6 +28,7 @@ from lodestone.schemas import Chunk
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def _chunk(chunk_id: str, text: str) -> Chunk:
     return Chunk(chunk_id=chunk_id, doc_id="d", text=text, index=0)
 
@@ -35,6 +36,7 @@ def _chunk(chunk_id: str, text: str) -> Chunk:
 # ---------------------------------------------------------------------------
 # Fixtures: tiny hand-verifiable corpus
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def tiny_chunks() -> list[Chunk]:
@@ -60,8 +62,8 @@ def indexed_bm25(tiny_chunks: list[Chunk]) -> BM25Retriever:
 # Error conditions
 # ---------------------------------------------------------------------------
 
-class TestBM25ErrorConditions:
 
+class TestBM25ErrorConditions:
     def test_search_before_index_raises(self):
         r = BM25Retriever()
         with pytest.raises(RuntimeError, match="index"):
@@ -77,8 +79,8 @@ class TestBM25ErrorConditions:
 # Basic search behaviour
 # ---------------------------------------------------------------------------
 
-class TestBM25Search:
 
+class TestBM25Search:
     def test_exact_match_ranks_highest(self, indexed_bm25: BM25Retriever):
         """Chunk containing the exact query term should be ranked first."""
         results = indexed_bm25.search("quantum", k=5)
@@ -181,8 +183,8 @@ class TestBM25Search:
 # IDF sanity
 # ---------------------------------------------------------------------------
 
-class TestBM25IDF:
 
+class TestBM25IDF:
     def test_common_term_lower_score_than_rare_term(self):
         """A term appearing in all docs has lower IDF than a term in one doc."""
         # 'common' appears in all 3 docs; 'rare' appears in only one

@@ -47,7 +47,7 @@ from lodestone.schemas import Chunk, ScoredChunk
 
 logger = logging.getLogger(__name__)
 
-_EPSILON = 1e-9   # prevents divide-by-zero in min-max normalisation
+_EPSILON = 1e-9  # prevents divide-by-zero in min-max normalisation
 
 
 class HybridRetriever(Retriever):
@@ -104,13 +104,10 @@ class HybridRetriever(Retriever):
         if not retrievers:
             raise ValueError("HybridRetriever requires at least one child retriever.")
         if strategy not in ("rrf", "weighted"):
-            raise ValueError(
-                f"Unknown fusion strategy '{strategy}'. Choose 'rrf' or 'weighted'."
-            )
+            raise ValueError(f"Unknown fusion strategy '{strategy}'. Choose 'rrf' or 'weighted'.")
         if weights is not None and len(weights) != len(retrievers):
             raise ValueError(
-                f"weights length ({len(weights)}) must match retrievers length "
-                f"({len(retrievers)})."
+                f"weights length ({len(weights)}) must match retrievers length ({len(retrievers)})."
             )
 
         self._retrievers = list(retrievers)
@@ -122,6 +119,7 @@ class HybridRetriever(Retriever):
         else:
             try:
                 from lodestone.config import get_settings  # noqa: PLC0415
+
                 self._rrf_k = get_settings().rrf_k
             except Exception:
                 self._rrf_k = 60
@@ -232,9 +230,7 @@ class HybridRetriever(Retriever):
 
         return [
             ScoredChunk(chunk=chunk_by_id[cid], score=score, retriever=self.name)
-            for cid, score in sorted(
-                rrf_scores.items(), key=lambda item: (-item[1], item[0])
-            )
+            for cid, score in sorted(rrf_scores.items(), key=lambda item: (-item[1], item[0]))
         ]
 
     def _fuse_weighted(self, per_retriever: list[list[ScoredChunk]]) -> list[ScoredChunk]:
@@ -283,9 +279,7 @@ class HybridRetriever(Retriever):
 
         return [
             ScoredChunk(chunk=chunk_by_id[cid], score=score, retriever=self.name)
-            for cid, score in sorted(
-                fused_scores.items(), key=lambda item: (-item[1], item[0])
-            )
+            for cid, score in sorted(fused_scores.items(), key=lambda item: (-item[1], item[0]))
         ]
 
 

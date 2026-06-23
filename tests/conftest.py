@@ -190,6 +190,7 @@ def fake_encoder_fn() -> Callable[[list[str]], np.ndarray]:
 # Fake cross-encoder scorer — token-overlap fraction
 # ---------------------------------------------------------------------------
 
+
 def fake_ce_scorer(pairs: list[tuple[str, str]]) -> np.ndarray:
     """Score (query, passage) pairs by token-overlap fraction.
 

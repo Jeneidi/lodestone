@@ -90,6 +90,7 @@ def build_default_pipeline(
 
     if settings is None:
         from lodestone.config import get_settings  # noqa: PLC0415
+
         settings = get_settings()
 
     bm25 = BM25Retriever(k1=1.5, b=0.75)

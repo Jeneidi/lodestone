@@ -69,9 +69,7 @@ def version() -> None:
 def search(
     query: str = typer.Argument(..., help="Query string to search."),
     k: int = typer.Option(10, "--k", "-k", help="Number of results to return."),
-    no_rerank: bool = typer.Option(
-        False, "--no-rerank", help="Disable cross-encoder reranking."
-    ),
+    no_rerank: bool = typer.Option(False, "--no-rerank", help="Disable cross-encoder reranking."),
 ) -> None:
     """Search the indexed corpus and display ranked results.
 
@@ -165,9 +163,7 @@ def ask(
         f"Latency: [bold]{answer.latency_ms:.1f} ms[/bold]",
     ]
     if faithfulness and answer.faithfulness is not None:
-        meta_parts.append(
-            f"Faithfulness: [bold]{answer.faithfulness:.3f}[/bold]"
-        )
+        meta_parts.append(f"Faithfulness: [bold]{answer.faithfulness:.3f}[/bold]")
 
     meta_line = "  |  ".join(meta_parts)
     console.print(

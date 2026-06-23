@@ -174,9 +174,7 @@ class PipelineSpec:
     use_rerank: bool = False
     use_rm3: bool = False
 
-    def build(
-        self, corpus: list[Document]
-    ) -> tuple[Retriever, CrossEncoderReranker | None]:
+    def build(self, corpus: list[Document]) -> tuple[Retriever, CrossEncoderReranker | None]:
         """Materialise the pipeline: chunk, construct, and index.
 
         Steps:

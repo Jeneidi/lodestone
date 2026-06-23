@@ -61,9 +61,7 @@ def _tokenize(text: str) -> list[str]:
 
 # Regex that splits on sentence-ending punctuation followed by whitespace.
 # Handles common abbreviations imperfectly — good enough for extractive QA.
-_SENT_SPLIT_RE = re.compile(
-    r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|!)\s+"
-)
+_SENT_SPLIT_RE = re.compile(r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|!)\s+")
 
 
 def _split_sentences(text: str) -> list[str]:
@@ -86,6 +84,7 @@ def _split_sentences(text: str) -> list[str]:
 # ---------------------------------------------------------------------------
 # Scoring
 # ---------------------------------------------------------------------------
+
 
 def _jaccard_overlap(query_tokens: frozenset[str], sentence: str) -> float:
     """Compute Jaccard similarity between *query_tokens* and sentence tokens.
@@ -113,6 +112,7 @@ def _jaccard_overlap(query_tokens: frozenset[str], sentence: str) -> float:
 # ---------------------------------------------------------------------------
 # Public class
 # ---------------------------------------------------------------------------
+
 
 class ExtractiveAnswerer:
     """Extractive answer generator — no model call, no network access.

@@ -43,6 +43,7 @@ from lodestone.schemas import Chunk, ScoredChunk
 # StubRetriever — in-file, fixed responses
 # ---------------------------------------------------------------------------
 
+
 class StubRetriever(Retriever):
     """Retriever that returns a pre-configured list of ScoredChunks.
 
@@ -74,6 +75,7 @@ class StubRetriever(Retriever):
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _chunk(chunk_id: str, text: str) -> Chunk:
     return Chunk(chunk_id=chunk_id, doc_id="d", text=text, index=0)
 
@@ -89,6 +91,7 @@ def _scored(chunk_id: str, text: str, score: float = 1.0, retriever: str = "stub
 # ---------------------------------------------------------------------------
 # Rm3QueryExpander tests
 # ---------------------------------------------------------------------------
+
 
 class TestRm3QueryExpander:
     """Tests for the RM3 pseudo-relevance feedback expander."""
@@ -137,7 +140,7 @@ class TestRm3QueryExpander:
         """'gradient' is the most common non-stopword → must appear in expansion."""
         expander = self._expander()
         expanded = expander.expand("machine learning")
-        expansion_part = expanded[len("machine learning"):].lower()
+        expansion_part = expanded[len("machine learning") :].lower()
         assert "gradient" in expansion_part, (
             f"Expected 'gradient' in expansion terms; got: {expanded!r}"
         )
@@ -146,7 +149,7 @@ class TestRm3QueryExpander:
         """Number of appended expansion terms must not exceed fb_terms."""
         fb_terms = 3
         expander = self._expander(fb_terms=fb_terms)
-        expanded = expander.expand("xyz")          # 'xyz' not in feedback vocab
+        expanded = expander.expand("xyz")  # 'xyz' not in feedback vocab
         original_token_count = 1
         total_tokens = len(expanded.split())
         appended = total_tokens - original_token_count
@@ -161,7 +164,7 @@ class TestRm3QueryExpander:
         expander = self._expander()
         expanded = expander.expand(query)
         # Extract expanded-only portion
-        expansion_only = expanded[len(query):].strip().lower().split()
+        expansion_only = expanded[len(query) :].strip().lower().split()
         assert "gradient" not in expansion_only, (
             f"'gradient' was already in query but appears in expansion: {expansion_only}"
         )
@@ -175,9 +178,7 @@ class TestRm3QueryExpander:
         expander = Rm3QueryExpander(stub, fb_docs=5, fb_terms=5)
         query = "some interesting question"
         result = expander.expand(query)
-        assert result == query, (
-            f"Expected original query unchanged, got: {result!r}"
-        )
+        assert result == query, f"Expected original query unchanged, got: {result!r}"
 
     def test_stopwords_not_in_expansion(self):
         """Stopwords from the feedback corpus must not appear as expansion terms."""
@@ -190,16 +191,15 @@ class TestRm3QueryExpander:
         stub = StubRetriever(stopword_heavy_chunks)
         expander = Rm3QueryExpander(stub, fb_docs=5, fb_terms=10)
         expanded = expander.expand("test query")
-        expansion_only = expanded[len("test query"):].strip().lower().split()
+        expansion_only = expanded[len("test query") :].strip().lower().split()
         for term in expansion_only:
-            assert term not in STOPWORDS, (
-                f"Stopword '{term}' should not appear in expansion terms."
-            )
+            assert term not in STOPWORDS, f"Stopword '{term}' should not appear in expansion terms."
 
 
 # ---------------------------------------------------------------------------
 # ExpandingRetriever tests
 # ---------------------------------------------------------------------------
+
 
 class TestExpandingRetriever:
     """Tests for the RM3-wrapping ExpandingRetriever."""
@@ -277,6 +277,7 @@ class TestExpandingRetriever:
 # CrossEncoderReranker tests
 # ---------------------------------------------------------------------------
 
+
 class TestCrossEncoderReranker:
     """Tests for the CrossEncoderReranker using injected scorer callables."""
 
@@ -287,8 +288,10 @@ class TestCrossEncoderReranker:
     @staticmethod
     def _constant_scorer(value: float) -> Callable[[list[tuple[str, str]]], np.ndarray]:
         """Returns a scorer that always outputs the same logit value."""
+
         def scorer(pairs: list[tuple[str, str]]) -> np.ndarray:
             return np.full(len(pairs), value, dtype=np.float32)
+
         return scorer
 
     @staticmethod
@@ -366,9 +369,7 @@ class TestCrossEncoderReranker:
         reranker = CrossEncoderReranker(scorer=self._reverse_scorer)
         results = reranker.rerank("test", self._CANDIDATES, top_k=5)
         scores = [r.score for r in results]
-        assert scores == sorted(scores, reverse=True), (
-            f"Results not sorted descending: {scores}"
-        )
+        assert scores == sorted(scores, reverse=True), f"Results not sorted descending: {scores}"
 
     def test_reranker_reverses_original_order(self):
         """With reverse_scorer the last original candidate becomes first ranked."""

@@ -167,14 +167,14 @@ def _write_markdown_report(
     """
     lines: list[str] = []
     lines.append("# Lodestone Retrieval Evaluation Results\n")
-    lines.append(
-        f"_Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}_\n"
-    )
+    lines.append(f"_Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}_\n")
 
     # Metrics table
     header_metrics = ["ndcg@5", "recall@5", "mrr", "map"]
     header_row = "| Pipeline | " + " | ".join(header_metrics) + " | p50 lat | p95 lat |"
-    sep_row = "|" + "|".join(["-" * 30] + ["-" * 28] * len(header_metrics) + ["-" * 10, "-" * 10]) + "|"
+    sep_row = (
+        "|" + "|".join(["-" * 30] + ["-" * 28] * len(header_metrics) + ["-" * 10, "-" * 10]) + "|"
+    )
 
     lines.append("\n## Per-Pipeline Metrics (mean [95% CI])\n")
     lines.append(header_row)
@@ -314,6 +314,7 @@ def main() -> int:
     # ------------------------------------------------------------------
     try:
         from lodestone.data import load_corpus, load_qa  # noqa: PLC0415
+
         corpus = load_corpus()
         qa = load_qa()
     except FileNotFoundError as exc:

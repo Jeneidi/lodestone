@@ -26,8 +26,8 @@ from lodestone.retrieval.tokenize import (
 # normalize
 # ---------------------------------------------------------------------------
 
-class TestNormalize:
 
+class TestNormalize:
     def test_lowercases_ascii(self):
         assert normalize("Hello World") == "hello world"
 
@@ -64,8 +64,8 @@ class TestNormalize:
 # word_tokenize
 # ---------------------------------------------------------------------------
 
-class TestWordTokenize:
 
+class TestWordTokenize:
     def test_basic_split(self):
         assert word_tokenize("hello world") == ["hello", "world"]
 
@@ -101,8 +101,8 @@ class TestWordTokenize:
 # remove_stopwords
 # ---------------------------------------------------------------------------
 
-class TestRemoveStopwords:
 
+class TestRemoveStopwords:
     def test_removes_common_stopwords(self):
         tokens = ["the", "quick", "brown", "fox"]
         result = remove_stopwords(tokens)
@@ -143,17 +143,20 @@ class TestRemoveStopwords:
 # _porter_lite_stem — tested against actual implementation behaviour
 # ---------------------------------------------------------------------------
 
-class TestPorterLiteStem:
 
+class TestPorterLiteStem:
     # Documented in module docstring (tested against actual output)
-    @pytest.mark.parametrize("token,expected", [
-        ("running", "run"),       # -ing with doubled consonant nn→n
-        ("walked", "walk"),       # -ed
-        ("faster", "fast"),       # -er
-        ("quickly", "quick"),     # -ly
-        ("darkness", "dark"),     # -ness
-        ("watches", "watch"),     # -es after ch (sibilant)
-    ])
+    @pytest.mark.parametrize(
+        "token,expected",
+        [
+            ("running", "run"),  # -ing with doubled consonant nn→n
+            ("walked", "walk"),  # -ed
+            ("faster", "fast"),  # -er
+            ("quickly", "quick"),  # -ly
+            ("darkness", "dark"),  # -ness
+            ("watches", "watch"),  # -es after ch (sibilant)
+        ],
+    )
     def test_documented_cases(self, token, expected):
         assert _porter_lite_stem(token) == expected
 
@@ -191,7 +194,7 @@ class TestPorterLiteStem:
         # 'cats'[:-1] = 'cat' which has len 3 < 4, so 'cats' is NOT stripped.
         # (See test_cats_not_stripped below.)
         # 'items'[:-1] = 'item' which has len 4 >= 4, so it IS stripped.
-        assert _porter_lite_stem("cats") == "cats"   # stem 'cat' len 3 < 4 → unchanged
+        assert _porter_lite_stem("cats") == "cats"  # stem 'cat' len 3 < 4 → unchanged
 
     def test_plain_s_strip_condition(self):
         # stem must be >= 4 chars: 'dogs' → stem 'dog' len 3 < 4 → unchanged
@@ -213,8 +216,8 @@ class TestPorterLiteStem:
 # tokenize (full pipeline)
 # ---------------------------------------------------------------------------
 
-class TestTokenize:
 
+class TestTokenize:
     def test_default_pipeline_removes_stops(self):
         # From the docstring (actual output verified):
         result = tokenize("The quick brown foxes are running")
@@ -259,12 +262,15 @@ class TestTokenize:
         for token in result:
             assert token.isalnum() or "_" in token
 
-    @pytest.mark.parametrize("text,remove_stops,stem", [
-        ("Neural networks backpropagate gradients", True, False),
-        ("Neural networks backpropagate gradients", True, True),
-        ("Neural networks backpropagate gradients", False, False),
-        ("Neural networks backpropagate gradients", False, True),
-    ])
+    @pytest.mark.parametrize(
+        "text,remove_stops,stem",
+        [
+            ("Neural networks backpropagate gradients", True, False),
+            ("Neural networks backpropagate gradients", True, True),
+            ("Neural networks backpropagate gradients", False, False),
+            ("Neural networks backpropagate gradients", False, True),
+        ],
+    )
     def test_parametrized_combinations(self, text, remove_stops, stem):
         result = tokenize(text, remove_stops=remove_stops, stem=stem)
         # Just ensure it doesn't raise and returns a list

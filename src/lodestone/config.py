@@ -94,10 +94,7 @@ class Settings(BaseSettings):
     rerank_top_k: int = Field(
         default=5,
         ge=1,
-        description=(
-            "Number of chunks to retain after cross-encoder reranking.  "
-            "Must be ≤ top_k."
-        ),
+        description=("Number of chunks to retain after cross-encoder reranking.  Must be ≤ top_k."),
     )
 
     rrf_k: int = Field(
@@ -146,8 +143,7 @@ class Settings(BaseSettings):
     generation_model: str = Field(
         default="claude-sonnet-4-6",
         description=(
-            "Anthropic model identifier used for answer generation when "
-            "generation_enabled=True."
+            "Anthropic model identifier used for answer generation when generation_enabled=True."
         ),
     )
 

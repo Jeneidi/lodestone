@@ -47,9 +47,7 @@ logger = logging.getLogger(__name__)
 # Sentence splitter (mirrors extractive.py)
 # ---------------------------------------------------------------------------
 
-_SENT_SPLIT_RE = re.compile(
-    r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|!)\s+"
-)
+_SENT_SPLIT_RE = re.compile(r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|!)\s+")
 
 
 def _split_sentences(text: str) -> list[str]:
@@ -70,6 +68,7 @@ def _split_sentences(text: str) -> list[str]:
 # Softmax helper
 # ---------------------------------------------------------------------------
 
+
 def _softmax(logits: Sequence[float]) -> list[float]:
     """Compute softmax over *logits*.
 
@@ -89,6 +88,7 @@ def _softmax(logits: Sequence[float]) -> list[float]:
 # ---------------------------------------------------------------------------
 # Context assembly
 # ---------------------------------------------------------------------------
+
 
 def _build_premise(chunks: list[ScoredChunk], max_chars: int = 1500) -> str:
     """Concatenate top-chunk texts into a single premise string.
@@ -124,6 +124,7 @@ def _build_premise(chunks: list[ScoredChunk], max_chars: int = 1500) -> str:
 # ---------------------------------------------------------------------------
 # Public class
 # ---------------------------------------------------------------------------
+
 
 class NliFaithfulnessScorer:
     """Compute faithfulness of an answer with respect to retrieved chunks.

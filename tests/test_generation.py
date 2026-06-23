@@ -21,6 +21,7 @@ from lodestone.schemas import Answer, Chunk, ScoredChunk
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _chunk(chunk_id: str, text: str, doc_id: str = "d") -> Chunk:
     return Chunk(chunk_id=chunk_id, doc_id=doc_id, text=text, index=0)
 
@@ -33,12 +34,14 @@ def _scored(chunk_id: str, text: str, score: float = 1.0) -> ScoredChunk:
 # ExtractiveAnswerer
 # ---------------------------------------------------------------------------
 
+
 class TestExtractiveAnswerer:
     """Tests for the extractive answer generator."""
 
     @pytest.fixture(autouse=True)
     def _import(self):
         from lodestone.generation.extractive import ExtractiveAnswerer
+
         self.ExtractiveAnswerer = ExtractiveAnswerer
 
     # ------------------------------------------------------------------
@@ -171,12 +174,14 @@ class TestExtractiveAnswerer:
 # NliFaithfulnessScorer
 # ---------------------------------------------------------------------------
 
+
 class TestNliFaithfulnessScorer:
     """Tests using an injected scorer callable — no model downloads."""
 
     @pytest.fixture(autouse=True)
     def _import(self):
         from lodestone.generation.faithfulness import NliFaithfulnessScorer
+
         self.NliFaithfulnessScorer = NliFaithfulnessScorer
 
     # Softmax helper for test assertions
@@ -222,12 +227,11 @@ class TestNliFaithfulnessScorer:
         answer = "This is the first sentence. This is the second sentence."
         chunks = [_scored("c0", "context text for premise")]
         result = scorer.score(answer, chunks)
-        assert abs(result - expected) < 1e-5, (
-            f"Expected {expected:.6f}, got {result:.6f}"
-        )
+        assert abs(result - expected) < 1e-5, f"Expected {expected:.6f}, got {result:.6f}"
 
     def test_perfect_entailment_returns_near_one(self):
         """Mock returning very high entailment logit → score near 1.0."""
+
         def mock_scorer(pairs):
             return [[-10.0, 10.0, 0.0] for _ in pairs]
 
@@ -237,6 +241,7 @@ class TestNliFaithfulnessScorer:
 
     def test_perfect_contradiction_returns_near_zero(self):
         """Mock returning very high contradiction logit → entailment prob near 0."""
+
         def mock_scorer(pairs):
             return [[10.0, -10.0, 0.0] for _ in pairs]
 
@@ -246,6 +251,7 @@ class TestNliFaithfulnessScorer:
 
     def test_uniform_logits_returns_one_third_entailment(self):
         """With uniform logits softmax gives 1/3 per class."""
+
         def mock_scorer(pairs):
             return [[1.0, 1.0, 1.0] for _ in pairs]
 
@@ -275,6 +281,7 @@ class TestNliFaithfulnessScorer:
 
     def test_score_in_zero_one(self):
         """Score must always be in [0, 1]."""
+
         def mock_scorer(pairs):
             return [[1.0, 2.0, 0.5] for _ in pairs]
 
@@ -287,12 +294,14 @@ class TestNliFaithfulnessScorer:
 # ClaudeAnswerer
 # ---------------------------------------------------------------------------
 
+
 class TestClaudeAnswerer:
     """Tests for ClaudeAnswerer — only the disabled-generation path."""
 
     def _clear_settings_cache(self):
         """Clear the lru_cache on get_settings so monkeypatched env vars take effect."""
         from lodestone.config import get_settings
+
         get_settings.cache_clear()
 
     @pytest.fixture(autouse=True)
@@ -329,6 +338,7 @@ class TestClaudeAnswerer:
     def test_instantiation_does_not_raise(self):
         """Importing and instantiating ClaudeAnswerer must not raise or import anthropic."""
         from lodestone.generation.claude import ClaudeAnswerer  # noqa: F401
+
         # Just constructing should not fail or trigger a network call
         answerer = ClaudeAnswerer()
         assert answerer is not None

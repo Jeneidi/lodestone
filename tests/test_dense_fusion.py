@@ -28,6 +28,7 @@ from lodestone.schemas import Chunk, ScoredChunk
 # StubRetriever for deterministic fusion testing
 # ---------------------------------------------------------------------------
 
+
 class StubRetriever(Retriever):
     """A Retriever that returns a pre-set list of ScoredChunks."""
 
@@ -53,6 +54,7 @@ class StubRetriever(Retriever):
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _chunk(chunk_id: str, text: str, doc_id: str = "d") -> Chunk:
     return Chunk(chunk_id=chunk_id, doc_id=doc_id, text=text, index=0)
 
@@ -65,8 +67,8 @@ def _scored(chunk: Chunk, score: float, retriever: str = "stub") -> ScoredChunk:
 # DenseRetriever tests
 # ---------------------------------------------------------------------------
 
-class TestDenseRetriever:
 
+class TestDenseRetriever:
     def test_search_before_index_raises(self, fake_encoder_fn: Callable):
         r = DenseRetriever(encoder=fake_encoder_fn)
         with pytest.raises(RuntimeError, match="index"):
@@ -94,9 +96,7 @@ class TestDenseRetriever:
         results = r.search("machine learning neural network gradient", k=5)
         assert len(results) >= 1
         top_doc_ids = [res.chunk.doc_id for res in results]
-        assert "doc_ml" in top_doc_ids, (
-            f"Expected doc_ml in top-5 results, got: {top_doc_ids}"
-        )
+        assert "doc_ml" in top_doc_ids, f"Expected doc_ml in top-5 results, got: {top_doc_ids}"
 
     def test_cooking_query_returns_cooking_chunk(
         self,
@@ -128,9 +128,7 @@ class TestDenseRetriever:
             results = r.search("history", k=k)
             assert len(results) <= k
 
-    def test_k_larger_than_corpus(
-        self, fake_encoder_fn: Callable, corpus_chunks: list[Chunk]
-    ):
+    def test_k_larger_than_corpus(self, fake_encoder_fn: Callable, corpus_chunks: list[Chunk]):
         r = DenseRetriever(encoder=fake_encoder_fn)
         r.index(corpus_chunks)
         results = r.search("science", k=1000)
@@ -156,8 +154,8 @@ class TestDenseRetriever:
 # HybridRetriever — RRF
 # ---------------------------------------------------------------------------
 
-class TestHybridRRF:
 
+class TestHybridRRF:
     def test_chunk_ranked_top_by_both_outranks_single(self):
         """
         chunk A is ranked #1 by both retrievers.
@@ -264,8 +262,8 @@ class TestHybridRRF:
 # HybridRetriever — Weighted fusion
 # ---------------------------------------------------------------------------
 
-class TestHybridWeighted:
 
+class TestHybridWeighted:
     def test_weight_honored_hand_computed(self):
         """
         Two chunks, two retrievers, weight=[0.8, 0.2].
@@ -283,9 +281,7 @@ class TestHybridWeighted:
         rB = [_scored(ca, 0.0, "B"), _scored(cb, 10.0, "B")]
         stub_a = StubRetriever("A", rA)
         stub_b = StubRetriever("B", rB)
-        hybrid = HybridRetriever(
-            [stub_a, stub_b], strategy="weighted", weights=[0.8, 0.2]
-        )
+        hybrid = HybridRetriever([stub_a, stub_b], strategy="weighted", weights=[0.8, 0.2])
         hybrid.index([ca, cb])
         results = hybrid.search("fruit", k=2)
         assert len(results) == 2

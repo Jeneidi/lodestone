@@ -178,64 +178,144 @@ _FALLBACK_PARAGRAPHS: list[dict] = [
 
 _FALLBACK_QA: list[dict] = [
     # Solar System
-    {"qid": "fb_001", "question": "How many planets are in the Solar System?",
-     "answer": "eight", "title": "The Solar System"},
-    {"qid": "fb_002", "question": "What separates the inner and outer planets?",
-     "answer": "the asteroid belt", "title": "The Solar System"},
+    {
+        "qid": "fb_001",
+        "question": "How many planets are in the Solar System?",
+        "answer": "eight",
+        "title": "The Solar System",
+    },
+    {
+        "qid": "fb_002",
+        "question": "What separates the inner and outer planets?",
+        "answer": "the asteroid belt",
+        "title": "The Solar System",
+    },
     # Photosynthesis
-    {"qid": "fb_003", "question": "What gas is produced during photosynthesis?",
-     "answer": "O2", "title": "Photosynthesis"},
-    {"qid": "fb_004", "question": "Why do plants appear green?",
-     "answer": "chlorophyll reflects green light", "title": "Photosynthesis"},
+    {
+        "qid": "fb_003",
+        "question": "What gas is produced during photosynthesis?",
+        "answer": "O2",
+        "title": "Photosynthesis",
+    },
+    {
+        "qid": "fb_004",
+        "question": "Why do plants appear green?",
+        "answer": "chlorophyll reflects green light",
+        "title": "Photosynthesis",
+    },
     # French Revolution
-    {"qid": "fb_005", "question": "When did the French Revolution begin?",
-     "answer": "1789", "title": "The French Revolution"},
-    {"qid": "fb_006", "question": "What document did the French Revolution produce?",
-     "answer": "Declaration of the Rights of Man and of the Citizen",
-     "title": "The French Revolution"},
+    {
+        "qid": "fb_005",
+        "question": "When did the French Revolution begin?",
+        "answer": "1789",
+        "title": "The French Revolution",
+    },
+    {
+        "qid": "fb_006",
+        "question": "What document did the French Revolution produce?",
+        "answer": "Declaration of the Rights of Man and of the Citizen",
+        "title": "The French Revolution",
+    },
     # DNA
-    {"qid": "fb_007", "question": "What are the four nitrogenous bases in DNA?",
-     "answer": "adenine, thymine, guanine, and cytosine", "title": "DNA and Genetics"},
-    {"qid": "fb_008", "question": "What is the shape of the DNA molecule?",
-     "answer": "double helix", "title": "DNA and Genetics"},
+    {
+        "qid": "fb_007",
+        "question": "What are the four nitrogenous bases in DNA?",
+        "answer": "adenine, thymine, guanine, and cytosine",
+        "title": "DNA and Genetics",
+    },
+    {
+        "qid": "fb_008",
+        "question": "What is the shape of the DNA molecule?",
+        "answer": "double helix",
+        "title": "DNA and Genetics",
+    },
     # Internet
-    {"qid": "fb_009", "question": "Who invented the World Wide Web?",
-     "answer": "Tim Berners-Lee", "title": "The Internet"},
-    {"qid": "fb_010", "question": "What protocol suite does the Internet use?",
-     "answer": "TCP/IP", "title": "The Internet"},
+    {
+        "qid": "fb_009",
+        "question": "Who invented the World Wide Web?",
+        "answer": "Tim Berners-Lee",
+        "title": "The Internet",
+    },
+    {
+        "qid": "fb_010",
+        "question": "What protocol suite does the Internet use?",
+        "answer": "TCP/IP",
+        "title": "The Internet",
+    },
     # Plate Tectonics
-    {"qid": "fb_011", "question": "Who developed the theory of plate tectonics?",
-     "answer": "Alfred Wegener", "title": "Plate Tectonics"},
+    {
+        "qid": "fb_011",
+        "question": "Who developed the theory of plate tectonics?",
+        "answer": "Alfred Wegener",
+        "title": "Plate Tectonics",
+    },
     # Python
-    {"qid": "fb_012", "question": "Who created the Python programming language?",
-     "answer": "Guido van Rossum", "title": "Python Programming Language"},
-    {"qid": "fb_013", "question": "In what year was Python first released?",
-     "answer": "1991", "title": "Python Programming Language"},
+    {
+        "qid": "fb_012",
+        "question": "Who created the Python programming language?",
+        "answer": "Guido van Rossum",
+        "title": "Python Programming Language",
+    },
+    {
+        "qid": "fb_013",
+        "question": "In what year was Python first released?",
+        "answer": "1991",
+        "title": "Python Programming Language",
+    },
     # Roman Empire
-    {"qid": "fb_014", "question": "Who was the first Roman Emperor?",
-     "answer": "Augustus", "title": "The Roman Empire"},
-    {"qid": "fb_015", "question": "When did the Western Roman Empire fall?",
-     "answer": "AD 476", "title": "The Roman Empire"},
+    {
+        "qid": "fb_014",
+        "question": "Who was the first Roman Emperor?",
+        "answer": "Augustus",
+        "title": "The Roman Empire",
+    },
+    {
+        "qid": "fb_015",
+        "question": "When did the Western Roman Empire fall?",
+        "answer": "AD 476",
+        "title": "The Roman Empire",
+    },
     # Black Holes
-    {"qid": "fb_016", "question": "What is the boundary of a black hole called?",
-     "answer": "event horizon", "title": "Black Holes"},
+    {
+        "qid": "fb_016",
+        "question": "What is the boundary of a black hole called?",
+        "answer": "event horizon",
+        "title": "Black Holes",
+    },
     # Antibiotics
-    {"qid": "fb_017", "question": "Who discovered penicillin?",
-     "answer": "Alexander Fleming", "title": "Antibiotics"},
-    {"qid": "fb_018", "question": "When was penicillin discovered?",
-     "answer": "1928", "title": "Antibiotics"},
+    {
+        "qid": "fb_017",
+        "question": "Who discovered penicillin?",
+        "answer": "Alexander Fleming",
+        "title": "Antibiotics",
+    },
+    {
+        "qid": "fb_018",
+        "question": "When was penicillin discovered?",
+        "answer": "1928",
+        "title": "Antibiotics",
+    },
     # Machine Learning
-    {"qid": "fb_019", "question": "What type of learning uses labelled data?",
-     "answer": "supervised learning", "title": "Machine Learning"},
+    {
+        "qid": "fb_019",
+        "question": "What type of learning uses labelled data?",
+        "answer": "supervised learning",
+        "title": "Machine Learning",
+    },
     # Water Cycle
-    {"qid": "fb_020", "question": "What are the primary drivers of the water cycle?",
-     "answer": "the Sun's energy and gravity", "title": "The Water Cycle"},
+    {
+        "qid": "fb_020",
+        "question": "What are the primary drivers of the water cycle?",
+        "answer": "the Sun's energy and gravity",
+        "title": "The Water Cycle",
+    },
 ]
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _doc_id_from_context(context: str) -> str:
     """Return a 12-character hex SHA-1 hash of *context* for use as doc_id."""
@@ -353,8 +433,9 @@ def _build_fallback() -> tuple[list[Document], list[QAExample]]:
             )
         )
 
-    logger.info("Fallback build complete: %d documents, %d QA pairs.",
-                len(documents), len(qa_examples))
+    logger.info(
+        "Fallback build complete: %d documents, %d QA pairs.", len(documents), len(qa_examples)
+    )
     return documents, qa_examples
 
 
@@ -367,16 +448,20 @@ def _write_jsonl(records: list, path: Path) -> None:
     logger.debug("Wrote %d records to %s.", len(records), path)
 
 
-def _print_rich_summary(documents: list[Document], qa_examples: list[QAExample],
-                        source: str) -> None:
+def _print_rich_summary(
+    documents: list[Document], qa_examples: list[QAExample], source: str
+) -> None:
     """Print a human-readable summary table of the built dataset."""
     try:
         from rich.console import Console
         from rich.table import Table
 
         console = Console()
-        table = Table(title=f"Lodestone Dataset Summary  [dim]({source})[/dim]",
-                      show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"Lodestone Dataset Summary  [dim]({source})[/dim]",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("Metric", style="bold")
         table.add_column("Value", justify="right")
 
@@ -404,6 +489,7 @@ def _print_rich_summary(documents: list[Document], qa_examples: list[QAExample],
 # Main entry point
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     """Parse CLI arguments and orchestrate dataset construction."""
     logging.basicConfig(
@@ -416,17 +502,22 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--docs", type=int, default=300,
+        "--docs",
+        type=int,
+        default=300,
         metavar="N",
         help="Maximum number of unique context paragraphs to include as documents.",
     )
     parser.add_argument(
-        "--questions", type=int, default=400,
+        "--questions",
+        type=int,
+        default=400,
         metavar="M",
         help="Maximum number of QA examples to collect.",
     )
     parser.add_argument(
-        "--force", action="store_true",
+        "--force",
+        action="store_true",
         help="Rebuild even if output files already exist.",
     )
     args = parser.parse_args()
@@ -437,10 +528,7 @@ def main() -> None:
     qa_path = data_dir / "qa.jsonl"
 
     if corpus_path.exists() and qa_path.exists() and not args.force:
-        print(
-            f"Dataset already exists at {data_dir}/ — skipping build.\n"
-            "Use --force to rebuild."
-        )
+        print(f"Dataset already exists at {data_dir}/ — skipping build.\nUse --force to rebuild.")
         return
 
     # Try HuggingFace first; fall back to built-in corpus on any failure.

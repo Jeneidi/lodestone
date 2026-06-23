@@ -85,7 +85,7 @@ class BM25Retriever(Retriever):
 
         # Internal state — populated by index()
         self._chunks: list[Chunk] = []
-        self._doc_lengths: list[int] = []      # token count per chunk
+        self._doc_lengths: list[int] = []  # token count per chunk
         self._avgdl: float = 0.0
         # term -> list of (chunk_index, term_freq)
         self._inverted_index: dict[str, list[tuple[int, int]]] = defaultdict(list)
@@ -187,8 +187,10 @@ class BM25Retriever(Retriever):
             for chunk_idx, tf in self._inverted_index[term]:
                 dl = self._doc_lengths[chunk_idx]
                 # BM25 term score
-                tf_norm = tf * (self.k1 + 1.0) / (
-                    tf + self.k1 * (1.0 - self.b + self.b * dl / self._avgdl)
+                tf_norm = (
+                    tf
+                    * (self.k1 + 1.0)
+                    / (tf + self.k1 * (1.0 - self.b + self.b * dl / self._avgdl))
                 )
                 scores[chunk_idx] = scores.get(chunk_idx, 0.0) + idf * tf_norm
 

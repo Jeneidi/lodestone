@@ -125,6 +125,7 @@ class CrossEncoderReranker:
         if self._model_name is not None:
             return self._model_name
         from lodestone.config import get_settings  # noqa: PLC0415
+
         return get_settings().reranker_model_name
 
     def _score_pairs(self, pairs: list[tuple[str, str]]) -> np.ndarray:
@@ -195,12 +196,10 @@ class CrossEncoderReranker:
             logger.debug("CrossEncoderReranker.rerank: no candidates, returning []")
             return []
 
-        pairs: list[tuple[str, str]] = [
-            (query, sc.chunk.text) for sc in candidates
-        ]
+        pairs: list[tuple[str, str]] = [(query, sc.chunk.text) for sc in candidates]
 
-        logits = self._score_pairs(pairs)       # shape (n,)
-        scores = _sigmoid(logits)               # shape (n,), in (0, 1)
+        logits = self._score_pairs(pairs)  # shape (n,)
+        scores = _sigmoid(logits)  # shape (n,), in (0, 1)
 
         # Build ScoredChunk list with updated scores and retriever name
         reranked: list[ScoredChunk] = []

@@ -117,9 +117,7 @@ class Rm3QueryExpander:
 
         # Step 2: retrieve pseudo-relevant chunks
         try:
-            pseudo_relevant: list[ScoredChunk] = self._retriever.search(
-                query, k=self.fb_docs
-            )
+            pseudo_relevant: list[ScoredChunk] = self._retriever.search(query, k=self.fb_docs)
         except Exception as exc:
             logger.warning("Rm3QueryExpander: retrieval failed — %s; returning original query", exc)
             return query
@@ -221,10 +219,7 @@ class ExpandingRetriever(Retriever):
 
         results = self._inner.search(expanded, k=k)
         # Re-tag retriever name
-        return [
-            ScoredChunk(chunk=sc.chunk, score=sc.score, retriever=self.name)
-            for sc in results
-        ]
+        return [ScoredChunk(chunk=sc.chunk, score=sc.score, retriever=self.name) for sc in results]
 
 
 __all__ = ["Rm3QueryExpander", "ExpandingRetriever"]

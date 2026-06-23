@@ -207,9 +207,7 @@ def paired_permutation_test(
     if a_arr.size == 0 or b_arr.size == 0:
         raise ValueError("paired_permutation_test requires non-empty sequences.")
     if a_arr.shape != b_arr.shape:
-        raise ValueError(
-            f"a and b must have the same length; got {a_arr.size} vs {b_arr.size}."
-        )
+        raise ValueError(f"a and b must have the same length; got {a_arr.size} vs {b_arr.size}.")
 
     d = a_arr - b_arr
     n = d.size

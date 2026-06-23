@@ -111,7 +111,7 @@ class Answer(BaseModel):
 
     text: str
     supporting_chunks: list[ScoredChunk] = Field(default_factory=list)
-    generator: str = ""          # "extractive" or "claude"
+    generator: str = ""  # "extractive" or "claude"
     faithfulness: float | None = None
     latency_ms: float = 0.0
 

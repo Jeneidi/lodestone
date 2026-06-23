@@ -287,9 +287,7 @@ def _write_ablation_markdown(df: Any, out_path: Path) -> None:
 
     lines: list[str] = []
     lines.append("# Lodestone Ablation Study\n")
-    lines.append(
-        f"_Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}_\n"
-    )
+    lines.append(f"_Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}_\n")
     lines.append("\n## Results Grid (sorted by nDCG@5 desc)\n")
 
     header = (
@@ -297,8 +295,9 @@ def _write_ablation_markdown(df: Any, out_path: Path) -> None:
         "| nDCG@5 (CI) | Recall@5 (CI) | MRR (CI) | p50 lat |"
     )
     sep = (
-        "|" + "|".join(["-" * 30, "-" * 10, "-" * 12, "-" * 8,
-                        "-" * 26, "-" * 26, "-" * 24, "-" * 10]) + "|"
+        "|"
+        + "|".join(["-" * 30, "-" * 10, "-" * 12, "-" * 8, "-" * 26, "-" * 26, "-" * 24, "-" * 10])
+        + "|"
     )
     lines.append(header)
     lines.append(sep)
@@ -372,6 +371,7 @@ def main() -> int:
     # ------------------------------------------------------------------
     try:
         from lodestone.data import load_corpus, load_qa  # noqa: PLC0415
+
         corpus = load_corpus()
         qa = load_qa()
     except FileNotFoundError as exc:

@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _resolve_path(path: str | Path | None, filename: str) -> Path:
     """Return an absolute :class:`~pathlib.Path` for *filename* under *path*.
 
@@ -48,6 +49,7 @@ def _resolve_path(path: str | Path | None, filename: str) -> Path:
         # Lazy import to avoid circular imports and to allow the module to be
         # imported even when pydantic-settings is not yet installed.
         from lodestone.config import get_settings  # noqa: PLC0415
+
         settings = get_settings()
         resolved = Path(settings.data_dir) / filename
     else:
@@ -80,6 +82,7 @@ def _missing_file_error(path: Path, filename: str) -> FileNotFoundError:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def load_corpus(path: str | Path | None = None) -> list[Document]:
     """Load the document corpus from a JSONL file.

@@ -192,8 +192,7 @@ def compare_runs(
 
     if n < 2:
         warnings.warn(
-            f"compare_runs: only {n} shared queries for metric '{metric}'; "
-            "p-value set to 1.0.",
+            f"compare_runs: only {n} shared queries for metric '{metric}'; p-value set to 1.0.",
             stacklevel=2,
         )
         if n == 0:
@@ -205,9 +204,7 @@ def compare_runs(
     scores_a = [per_q_a[qid].get(metric, 0.0) for qid in shared_qids]
     scores_b = [per_q_b[qid].get(metric, 0.0) for qid in shared_qids]
 
-    delta = float(
-        sum(a - b for a, b in zip(scores_a, scores_b)) / n
-    )
+    delta = float(sum(a - b for a, b in zip(scores_a, scores_b)) / n)
     p_value = paired_permutation_test(scores_a, scores_b)
 
     return {

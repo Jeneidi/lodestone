@@ -41,15 +41,11 @@ _SYSTEM_PROMPT = (
     "Answer the question using ONLY information present in the provided context.  "
     "Do NOT cite, infer from, or reference any knowledge outside the context.  "
     "If the answer is not contained in the context, respond with exactly: "
-    "\"I don't know — the provided context does not contain this information.\""
+    '"I don\'t know — the provided context does not contain this information."'
     "  Keep your answer concise (1–3 sentences)."
 )
 
-_USER_TEMPLATE = (
-    "{context_block}\n\n"
-    "Question: {question}\n\n"
-    "Answer:"
-)
+_USER_TEMPLATE = "{context_block}\n\nQuestion: {question}\n\nAnswer:"
 
 
 def _build_context_block(chunks: list[ScoredChunk], max_chars: int = 4000) -> str:
@@ -79,6 +75,7 @@ def _build_context_block(chunks: list[ScoredChunk], max_chars: int = 4000) -> st
 # ---------------------------------------------------------------------------
 # Public class
 # ---------------------------------------------------------------------------
+
 
 class ClaudeAnswerer:
     """Answer generator backed by the Anthropic Messages API.
@@ -148,6 +145,7 @@ class ClaudeAnswerer:
             # convenience (the anthropic SDK itself respects this variable, but
             # we want a clear error message if neither is set).
             import os  # noqa: PLC0415
+
             api_key = os.environ.get("ANTHROPIC_API_KEY")
 
         if not api_key:
@@ -179,6 +177,7 @@ class ClaudeAnswerer:
         if self._model_override:
             return self._model_override
         from lodestone.config import get_settings  # noqa: PLC0415
+
         return get_settings().generation_model
 
     # ------------------------------------------------------------------
