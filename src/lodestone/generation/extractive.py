@@ -190,10 +190,26 @@ class ExtractiveAnswerer:
                 latency_ms=(time.perf_counter() - t_start) * 1000.0,
             )
 
-        answer_text = chunks[0].chunk.text
+        query_tokens = frozenset(_tokenize(query))
+
+        # (score, chunk_rank, sentence_index, sentence) for every sentence in
+        # every chunk; chunk_rank/sentence_index keep ties deterministic.
+        candidates: list[tuple[float, int, int, str]] = [
+            (_jaccard_overlap(query_tokens, sentence), chunk_rank, sentence_index, sentence)
+            for chunk_rank, scored_chunk in enumerate(chunks)
+            for sentence_index, sentence in enumerate(_split_sentences(scored_chunk.chunk.text))
+        ]
+        candidates.sort(key=lambda c: (-c[0], c[1], c[2]))
+
+        top_sentences = [c[3] for c in candidates[: self.max_sentences]]
+        answer_text = " ".join(top_sentences)
 
         latency = (time.perf_counter() - t_start) * 1000.0
-        logger.debug("ExtractiveAnswerer: returning top chunk text in %.2f ms.", latency)
+        logger.debug(
+            "ExtractiveAnswerer: selected %d sentence(s) in %.2f ms.",
+            len(top_sentences),
+            latency,
+        )
 
         return Answer(
             text=answer_text,
