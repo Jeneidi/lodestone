@@ -285,7 +285,7 @@ Frameworks add abstraction layers that make it hard to understand what is actual
 SQuAD relevance labels are context (paragraph) level. When building the corpus, each unique paragraph is hashed and deduplicated — only its first occurrence is kept. QA pairs link to their source paragraph's doc_id. This gives clean, unambiguous relevance labels without needing manual annotation.
 
 **Lazy model loading for offline tests**
-The DenseRetriever and CrossEncoderReranker accept an injectable `encoder` / `scorer` callable. Tests inject a tiny numpy random encoder, so the full 262-test suite runs in 0.1 seconds with no network access and no model download.
+The DenseRetriever and CrossEncoderReranker accept an injectable `encoder` / `scorer` callable. Tests inject a tiny numpy random encoder, so the full 262-test suite runs in well under a second with no network access and no model download.
 
 **Injectable encoders for testability**
 Both `DenseRetriever(encoder=...)` and `CrossEncoderReranker(scorer=...)` accept callables that replace the sentence-transformers model. This makes unit testing deterministic and fast without mocking the entire library.

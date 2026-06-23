@@ -34,8 +34,13 @@ data/*.npy
 data/*.npz
 
 # Evaluation reports (generated at runtime via `make eval` / `make ablate`)
-# Exclude the directory by default, but explicitly track the portfolio artefacts
-evals/reports/
+# Exclude contents by default, but explicitly track the portfolio artefacts.
+# NB: must be "evals/reports/*", not "evals/reports/" — a directory-level
+# ignore blocks git from descending into it, so the negations below it would
+# silently have no effect (see git-scm.com/docs/gitignore, "It is not
+# possible to re-include a file if a parent directory of that file is
+# excluded").
+evals/reports/*
 !evals/reports/RESULTS.md
 !evals/reports/results.json
 !evals/reports/ABLATION.md
